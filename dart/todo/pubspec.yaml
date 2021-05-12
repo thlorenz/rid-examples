@@ -1,0 +1,14 @@
+name: rid_dart_todo 
+version: 0.0.0
+environment:
+  sdk: '>=2.12.0 <=3.0.0'
+
+ffigen:
+  output: 'lib/generated/ffigen_binding.dart'
+  headers:
+    entry-points:
+      - 'lib/generated/bindings.h'
+
+dependencies: 
+  ffi: ^1.0.0
+  ffigen: ^2.4.2

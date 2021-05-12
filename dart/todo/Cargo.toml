@@ -1,0 +1,25 @@
+[package]
+name = "rid_dart_todo"
+version = "0.1.0"
+authors = ["Thorsten Lorenz <thlorenz@gmx.de>"]
+edition = "2018"
+
+[lib]
+name = "rid_dart_todo"
+crate-type = ["cdylib"]
+path = "src/app.rs"
+doctest = false
+test = false
+
+[[bin]]
+name = "rid_build"
+path = "rid_build.rs"
+
+# Note that until rid is open sourced and published to crates.io the examples
+# assume it to reside in a relative folder
+[dependencies]
+rid = { path = "../../../rid" }
+rid_build = { path = "../../../rid/rid-build" }
+
+[build-dependencies]
+rid_build = { path = "../../../rid/rid-build" }
