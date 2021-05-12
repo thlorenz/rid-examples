@@ -20,6 +20,12 @@ _Rid_ consumes the annotations added to your Rust code to generate all the
 Additionally it generates extension methods on entities, such as _models_ in order to expose an
 API on the Dart/Flutter end that is super fun to work with.
 
+## Examples
+
+### Dart
+
+- [Command Line Todo App](./dart/todo)
+
 ## Is Rid open sourced?
 
 _Rid_ is currently not open sourced as I'm looking into finding a way to sponsor it in order to be able
