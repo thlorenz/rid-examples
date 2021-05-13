@@ -26,20 +26,22 @@ API on the Dart/Flutter end that is super fun to work with.
 
 - [Command Line Todo App](./dart/todo)
 
+### Flutter
+
 ## Is Rid open sourced?
 
-_Rid_ is currently not open sourced as I'm looking into finding a way to sponsor it in order to be able
-to maintain it once it is released.
+_Rid_ is _[Sponsorware](https://calebporzio.com/sponsorware)_ and thus not open sourced yet. 
 
-My plan is to allow people to sponsor me monthly at which point they gain instant access to the
-currently private [_rid_](https://github.com/thlorenz/rid) repository.
+You [can sponsor me](https://github.com/sponsors/thlorenz) via a monthly contribution and **gain
+immediate access** to the currently private [_rid_](https://github.com/thlorenz/rid) repository once you pledge sponsorship.
 
-I will open source _rid_ once I reach a (yet to be determined) threshold of sponsors and feel confident that this will
-allow me to keep evolving and maintaining the library.
+**I will fully open source _rid_ to everyone once I reach 50 sponsors**.
 
-You can [start sponsoring me](https://github.com/sponsors/thlorenz) in order to help me with
-all the work going into it and get to the point were I can open source it ASAP. I greatly
-appreciate it. 🙏 ❤️
+By [sponsoring me](https://github.com/sponsors/thlorenz) you not only show your appreciation
+for all the work that went into _rid_ already, but also **help me evolve, stabilize and
+maintain** it.
+
+I greatly appreciate it. 🙏 ❤️
 
 ## LICENSE
 
