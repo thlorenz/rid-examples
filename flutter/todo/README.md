@@ -2,7 +2,14 @@
 
 Rust integrated Dart Flutter Project
 
+## Tutorial
+
+A tutorial on how to build this app will be provided shortly on the [rid
+homepage](https://thlorenz.com/rid-site/docs/examples/flutter-todo-app/).
+
 ## Getting Started
+
+_Please see [Caveats](#Caveats) first_.
 
 Use the below scripts to get the app ready to run with Flutter.
 
@@ -88,3 +95,11 @@ functionality currently provided by these scripts.
   `./plugin/lib/ios`
 - `./macos` builds the Rust binary to run on MacOs directly and places it inside
   `./plugin/lib/macos`, this is the same format as running `cargo build` on your Mac
+
+## Caveats
+
+At this point _Rid_ hasn't been published, therefore the build step cannot be performed and
+this example only serves to demonstrate what is possible once it _is_ published and open
+sourced.
+
+For more information please see [_Is Rid Open Sourced?_](../../README.md#is-rid-open-sourced)
