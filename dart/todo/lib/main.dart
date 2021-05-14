@@ -8,6 +8,11 @@ printStatus(Pointer<Model> model) {
   final filter = model.filter;
   final matchingTodos = model.filtered_todos();
 
+  final Pointer<Todo> todo = todos[0];
+
+  final status = todo.completed ? 'done' : 'pending';
+  print('${todo.title}with id ${todo.id} is $status');
+
   print("Total Todos:     $total");
   print("Filter:          ${filter.display()}");
   print("\nMatching Todos:");
