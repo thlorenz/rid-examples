@@ -1,19 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:plugin/generated/rid_generated.dart';
 
 class Menu extends StatelessWidget {
   final void Function() restartAll;
   final void Function() completeAll;
   final void Function() removeCompleted;
 
+  final bool Function() autoExpireCompleted;
+  final Future<void> Function(bool) setAutoExpireCompleted;
+
   const Menu({
     required this.restartAll,
     required this.completeAll,
     required this.removeCompleted,
+    required this.setAutoExpireCompleted,
+    required this.autoExpireCompleted,
     Key? key,
   }) : super(key: key);
   @override
   Widget build(BuildContext context) {
+    debugPrint('  build: Menu');
     return ListView(
       padding: EdgeInsets.zero,
       children: <Widget>[
@@ -31,7 +38,49 @@ class Menu extends StatelessWidget {
           title: Text('Remove Completed'),
           onTap: removeCompleted,
         ),
+        ListTile(
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Text('Expire Completed'),
+              AutoRemoveCompletedWidget(
+                autoExpireCompleted: autoExpireCompleted,
+                setAutoExpireCompleted: setAutoExpireCompleted,
+              ),
+            ],
+          ),
+        ),
       ],
+    );
+  }
+}
+
+class AutoRemoveCompletedWidget extends StatefulWidget with StatefulLock {
+  final bool Function() autoExpireCompleted;
+  final Future<void> Function(bool) setAutoExpireCompleted;
+
+  const AutoRemoveCompletedWidget({
+    Key? key,
+    required this.autoExpireCompleted,
+    required this.setAutoExpireCompleted,
+  }) : super(key: key);
+
+  @override
+  State<AutoRemoveCompletedWidget> createState() =>
+      _AutoRemoveCompletedWidgetState();
+}
+
+class _AutoRemoveCompletedWidgetState extends State<AutoRemoveCompletedWidget>
+    with StateAsync {
+  @override
+  Widget build(BuildContext context) {
+    debugPrint('  build: AutoRemoveCompleted');
+    return Checkbox(
+      value: widget.autoExpireCompleted(),
+      onChanged: (val) {
+        if (val != null)
+          setStateAsync(() => widget.setAutoExpireCompleted(val));
+      },
     );
   }
 }

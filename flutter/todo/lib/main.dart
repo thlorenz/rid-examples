@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:plugin/plugin.dart';
 import 'package:todo/views/menu.dart';
@@ -6,60 +8,81 @@ import 'package:todo/views/todos.dart';
 const Color FILTER_SELECTED_COLOR = Colors.blue;
 const Color FILTER_UNSELECTED_COLOR = Colors.black;
 
-void main() {
-  final model = rid_ffi.initModel();
-  runApp(TodoApp(model));
+void configRid() {
+  RID_DEBUG_REPLY = (reply) => debugPrint('$reply');
 }
 
-class TodoApp extends StatelessWidget {
-  final Pointer<Model> _model;
-  const TodoApp(this._model, {Key? key}) : super(key: key);
+void main() async {
+  final store = createStore();
+  configRid();
+  await store.msgSetAutoExpireCompletedTodos(false);
+  runApp(TodoApp(store));
+}
+
+class TodoApp extends StatelessWidget with StatelessLock {
+  final Pointer<RawStore> _store;
+
+  const TodoApp(this._store, {Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('  build: TodoApp');
     return MaterialApp(
       title: 'Rust/Flutter Todo App',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: TodosPage(this._model, title: 'Todo App'),
+      home: TodosPage(this._store, title: 'Todo App'),
       debugShowCheckedModeBanner: false,
     );
   }
 }
 
-class TodosPage extends StatefulWidget {
+class TodosPage extends StatefulWidget with StatefulLock {
   final String title;
-  final Pointer<Model> _model;
-  TodosPage(this._model, {Key? key, required this.title}) : super(key: key);
+  final Pointer<RawStore> _store;
+
+  TodosPage(this._store, {Key? key, required this.title}) : super(key: key);
 
   @override
-  _TodosPageState createState() => _TodosPageState(this._model);
+  _TodosPageState createState() => _TodosPageState(this._store);
 }
 
-class _TodosPageState extends State<TodosPage> {
+class _TodosPageState extends State<TodosPage> with StateAsync<TodosPage> {
+  late final StreamSubscription<PostedReply> sub;
   final _textFieldController = TextEditingController();
   String? addTodoTitle;
 
-  final Pointer<Model> _model;
-  RidVec_Pointer_Todo? _todos;
+  final Pointer<RawStore> _store;
 
-  _TodosPageState(this._model);
+  _TodosPageState(this._store);
 
-  RidVec_Pointer_Todo get todos {
-    assert(_todos != null);
-    return _todos!;
+  @override
+  void initState() {
+    // Completed todos are expired on a separate thread from Rust, i.e. not in
+    // direct response to a user message.
+    // We subscribe to this event here to update the list of filtered todos
+    // when that happens.
+    sub = replyChannel.stream
+        .where((reply) => reply.type == Reply.CompletedTodoExpired)
+        .listen((_) {
+      setState(() {});
+    });
+    super.initState();
   }
 
-  set todos(RidVec_Pointer_Todo val) {
-    _todos?.dispose();
-    _todos = val;
+  @override
+  void dispose() {
+    sub.cancel();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    todos = _model.filtered_todos();
-    final RidFilter filter = _model.filter;
+    debugPrint('  build: TodosPage');
+    final RidFilter filter = _store.filter;
+    final filteredTodos = _store.filtered_todos().toDart();
+    debugPrint("filtered: \n  ${filteredTodos.join('\n  ')}");
 
     return SafeArea(
       child: Scaffold(
@@ -87,11 +110,15 @@ class _TodosPageState extends State<TodosPage> {
           ),
         ),
         drawer: Drawer(
-            child: Menu(
-          restartAll: () => setState(_model.msgRestartAll),
-          completeAll: () => setState(_model.msgCompleteAll),
-          removeCompleted: () => setState(_model.msgRemoveCompleted),
-        )),
+          child: Menu(
+            restartAll: () => setStateAsync(_store.msgRestartAll),
+            completeAll: () => setStateAsync(_store.msgCompleteAll),
+            removeCompleted: () => setStateAsync(_store.msgRemoveCompleted),
+            autoExpireCompleted: () => _store.auto_expire_completed_todos,
+            setAutoExpireCompleted: (val) =>
+                _store.msgSetAutoExpireCompletedTodos(val),
+          ),
+        ),
         bottomNavigationBar: BottomAppBar(
           child: Row(
             children: <Widget>[
@@ -102,8 +129,8 @@ class _TodosPageState extends State<TodosPage> {
                       ? FILTER_SELECTED_COLOR
                       : FILTER_UNSELECTED_COLOR,
                 ),
-                onPressed: () => setState(
-                    () => _model.msgSetFilter(RidFilter.Pending.index)),
+                onPressed: () =>
+                    setStateAsync(() => _store.msgSetFilter(Filter.Pending)),
               ),
               Spacer(),
               IconButton(
@@ -113,8 +140,8 @@ class _TodosPageState extends State<TodosPage> {
                       ? FILTER_SELECTED_COLOR
                       : FILTER_UNSELECTED_COLOR,
                 ),
-                onPressed: () => setState(
-                    () => _model.msgSetFilter(RidFilter.Completed.index)),
+                onPressed: () =>
+                    setStateAsync(() => _store.msgSetFilter(Filter.Completed)),
               ),
               IconButton(
                 icon: Icon(
@@ -124,20 +151,23 @@ class _TodosPageState extends State<TodosPage> {
                       : FILTER_UNSELECTED_COLOR,
                 ),
                 onPressed: () =>
-                    setState(() => _model.msgSetFilter(RidFilter.All.index)),
+                    setStateAsync(() => _store.msgSetFilter(Filter.All)),
               ),
             ],
           ),
         ),
         body: TodosView(
-          todos,
-          onToggleTodo: (id) {
-            _model.msgToggleTodo(id);
-            if (_model.filter != RidFilter.All) {
-              setState(() {});
-            }
+          filteredTodos,
+          getTodoById: (id) => (_store.todo_by_id(id))?.toDart(),
+          onToggleTodo: (id) async {
+            await _store.msgToggleTodo(id);
+            setState(() {});
           },
-          onRemoveTodo: (id) => setState(() => _model.msgRemoveTodo(id)),
+          onRemoveTodo: (id) async {
+            await _store.msgRemoveTodo(id);
+            setState(() {});
+          },
+          getAutoExpireCompleted: () => _store.auto_expire_completed_todos,
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
         floatingActionButton: FloatingActionButton(
@@ -145,10 +175,9 @@ class _TodosPageState extends State<TodosPage> {
             _textFieldController.clear();
             await _addTodoDialog(context);
             if (addTodoTitle != null && addTodoTitle!.trim().isNotEmpty) {
-              setState(() {
-                _model.msgAddTodo(addTodoTitle!);
-              });
-              debugPrint("${_model.debug(true)}");
+              await _store.msgAddTodo(addTodoTitle!);
+              setState(() {});
+              debugPrint("${_store.debug(true)}");
             }
           },
           tooltip: 'Add Todo',
@@ -167,6 +196,7 @@ class _TodosPageState extends State<TodosPage> {
             content: TextField(
               controller: _textFieldController,
               decoration: InputDecoration(hintText: "Todo title"),
+              autofocus: true,
             ),
             actions: <Widget>[
               TextButton(
