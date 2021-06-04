@@ -6,14 +6,33 @@ import 'package:todo/views/todos.dart';
 const Color FILTER_SELECTED_COLOR = Colors.blue;
 const Color FILTER_UNSELECTED_COLOR = Colors.black;
 
+/// Locks down the store while building widgets in order to prevent the
+/// application from modifying its state while we are reading it in order to
+/// render the widget.
+/// For this app this wouldn't be necessary since no background tasks that
+/// write to the store are running. However it is good practice to do this anyways.
+/// Note that when using StateManagement solutions like riverpod, rid will
+/// ensure the above by other means.
+void syncStoreAccess() {
+  final binding = WidgetsFlutterBinding.ensureInitialized();
+  binding.addPersistentFrameCallback((_) {
+    rid_ffi.rid_store_lock();
+    binding.addPostFrameCallback((_) {
+      rid_ffi.rid_store_unlock();
+    });
+  });
+}
+
 void main() {
-  final model = rid_ffi.initModel();
-  runApp(TodoApp(model));
+  final store = rid_ffi.createStore();
+  syncStoreAccess();
+  runApp(TodoApp(store));
 }
 
 class TodoApp extends StatelessWidget {
-  final Pointer<Model> _model;
-  const TodoApp(this._model, {Key? key}) : super(key: key);
+  final Pointer<Store> _store;
+
+  const TodoApp(this._store, {Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +41,7 @@ class TodoApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: TodosPage(this._model, title: 'Todo App'),
+      home: TodosPage(this._store, title: 'Todo App'),
       debugShowCheckedModeBanner: false,
     );
   }
@@ -30,21 +49,22 @@ class TodoApp extends StatelessWidget {
 
 class TodosPage extends StatefulWidget {
   final String title;
-  final Pointer<Model> _model;
-  TodosPage(this._model, {Key? key, required this.title}) : super(key: key);
+  final Pointer<Store> _store;
+
+  TodosPage(this._store, {Key? key, required this.title}) : super(key: key);
 
   @override
-  _TodosPageState createState() => _TodosPageState(this._model);
+  _TodosPageState createState() => _TodosPageState(this._store);
 }
 
 class _TodosPageState extends State<TodosPage> {
   final _textFieldController = TextEditingController();
   String? addTodoTitle;
 
-  final Pointer<Model> _model;
+  final Pointer<Store> _store;
   RidVec_Pointer_Todo? _todos;
 
-  _TodosPageState(this._model);
+  _TodosPageState(this._store);
 
   RidVec_Pointer_Todo get todos {
     assert(_todos != null);
@@ -58,8 +78,8 @@ class _TodosPageState extends State<TodosPage> {
 
   @override
   Widget build(BuildContext context) {
-    todos = _model.filtered_todos();
-    final RidFilter filter = _model.filter;
+    todos = _store.filtered_todos();
+    final RidFilter filter = _store.filter;
 
     return SafeArea(
       child: Scaffold(
@@ -88,9 +108,21 @@ class _TodosPageState extends State<TodosPage> {
         ),
         drawer: Drawer(
             child: Menu(
-          restartAll: () => setState(_model.msgRestartAll),
-          completeAll: () => setState(_model.msgCompleteAll),
-          removeCompleted: () => setState(_model.msgRemoveCompleted),
+          restartAll: () async {
+            final res = await _store.msgRestartAll();
+            debugPrint('$res');
+            setState(() {});
+          },
+          completeAll: () async {
+            final res = await _store.msgCompleteAll();
+            debugPrint('$res');
+            setState(() {});
+          },
+          removeCompleted: () async {
+            final res = await _store.msgRemoveCompleted();
+            debugPrint('$res');
+            setState(() {});
+          },
         )),
         bottomNavigationBar: BottomAppBar(
           child: Row(
@@ -102,8 +134,11 @@ class _TodosPageState extends State<TodosPage> {
                       ? FILTER_SELECTED_COLOR
                       : FILTER_UNSELECTED_COLOR,
                 ),
-                onPressed: () => setState(
-                    () => _model.msgSetFilter(RidFilter.Pending.index)),
+                onPressed: () async {
+                  final res = await _store.msgSetFilter(Filter.Pending);
+                  debugPrint('$res');
+                  setState(() {});
+                },
               ),
               Spacer(),
               IconButton(
@@ -113,8 +148,11 @@ class _TodosPageState extends State<TodosPage> {
                       ? FILTER_SELECTED_COLOR
                       : FILTER_UNSELECTED_COLOR,
                 ),
-                onPressed: () => setState(
-                    () => _model.msgSetFilter(RidFilter.Completed.index)),
+                onPressed: () async {
+                  final res = await _store.msgSetFilter(Filter.Completed);
+                  debugPrint('$res');
+                  setState(() {});
+                },
               ),
               IconButton(
                 icon: Icon(
@@ -123,21 +161,28 @@ class _TodosPageState extends State<TodosPage> {
                       ? FILTER_SELECTED_COLOR
                       : FILTER_UNSELECTED_COLOR,
                 ),
-                onPressed: () =>
-                    setState(() => _model.msgSetFilter(RidFilter.All.index)),
+                onPressed: () async {
+                  final res = await _store.msgSetFilter(Filter.All);
+                  debugPrint('$res');
+                  setState(() {});
+                },
               ),
             ],
           ),
         ),
         body: TodosView(
           todos,
-          onToggleTodo: (id) {
-            _model.msgToggleTodo(id);
-            if (_model.filter != RidFilter.All) {
+          onToggleTodo: (id) async {
+            final res = await _store.msgToggleTodo(id);
+            debugPrint('$res');
+            if (_store.filter != RidFilter.All) {
               setState(() {});
             }
           },
-          onRemoveTodo: (id) => setState(() => _model.msgRemoveTodo(id)),
+          onRemoveTodo: (id) async {
+            final res = await _store.msgRemoveTodo(id);
+            debugPrint('$res');
+          },
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
         floatingActionButton: FloatingActionButton(
@@ -145,10 +190,10 @@ class _TodosPageState extends State<TodosPage> {
             _textFieldController.clear();
             await _addTodoDialog(context);
             if (addTodoTitle != null && addTodoTitle!.trim().isNotEmpty) {
-              setState(() {
-                _model.msgAddTodo(addTodoTitle!);
-              });
-              debugPrint("${_model.debug(true)}");
+              final res = await _store.msgAddTodo(addTodoTitle!);
+              debugPrint('$res');
+              setState(() {});
+              debugPrint("${_store.debug(true)}");
             }
           },
           tooltip: 'Add Todo',

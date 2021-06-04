@@ -11,19 +11,17 @@ public class SwiftPlugin: NSObject, FlutterPlugin {
 }
 // <rid:prevent_tree_shake Start>
 func dummyCallsToPreventTreeShaking() {
-    rid_model_debug(nil);
-    rid_model_debug_pretty(nil);
+    rid_store_debug(nil);
+    rid_store_debug_pretty(nil);
     rid_cstring_free(nil);
-    rid_model_last_added_id(nil);
-    rid_model_todos(nil);
+    rid_store_last_added_id(nil);
+    rid_store_todos(nil);
     rid_vec_Todo_len(nil);
     rid_vec_Todo_get(nil, 0);
-    rid_model_filter(nil);
-    initModel();
-    rid_export_Model_filtered_todos(nil);
+    rid_store_filter(nil);
+    rid_export_Store_filtered_todos(nil);
     rid_free_vec_Pointer_Todo(RidVec_Pointer_Todo());
     rid_get_item_Pointer_Todo(RidVec_Pointer_Todo(), 0);
-    rid_free_Model(nil);
     rid_todo_debug(nil);
     rid_todo_debug_pretty(nil);
     rid_todo_display(nil);
@@ -34,12 +32,19 @@ func dummyCallsToPreventTreeShaking() {
     rid_filter_debug(0);
     rid_filter_debug_pretty(0);
     rid_filter_display(0);
-    rid_msg_AddTodo(nil, nil);
-    rid_msg_RemoveTodo(nil, 0);
-    rid_msg_RemoveCompleted(nil);
-    rid_msg_ToggleTodo(nil, 0);
-    rid_msg_CompleteAll(nil);
-    rid_msg_RestartAll(nil);
-    rid_msg_SetFilter(nil, Filter(rawValue: 0));
+    createStore();
+    rid_store_lock();
+    rid_store_unlock();
+    rid_store_free();
+    rid_msg_AddTodo(0, nil);
+    rid_msg_RemoveTodo(0, 0);
+    rid_msg_RemoveCompleted(0);
+    rid_msg_CompleteTodo(0, 0);
+    rid_msg_RestartTodo(0, 0);
+    rid_msg_ToggleTodo(0, 0);
+    rid_msg_CompleteAll(0);
+    rid_msg_RestartAll(0);
+    rid_msg_SetFilter(0, Filter(rawValue: 0));
+    include_reply();
 }
 // <rid:prevent_tree_shake End>

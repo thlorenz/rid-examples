@@ -3,8 +3,8 @@ import 'package:plugin/generated/rid_generated.dart';
 
 class TodoView extends StatefulWidget {
   final Pointer<Todo> todo;
-  final void Function() onToggle;
-  final void Function() onRemove;
+  final Future<void> Function() onToggle;
+  final Future<void> Function() onRemove;
 
   const TodoView(this.todo,
       {required this.onToggle, required this.onRemove, Key? key})
@@ -21,7 +21,7 @@ class _TodoViewState extends State<TodoView> {
       key: Key("Todo ${widget.todo.id}"),
       child: Card(
         child: InkWell(
-          onTap: () => setState(widget.onToggle),
+          onTap: () => widget.onToggle().whenComplete(() => setState(() {})),
           child: ListTile(
             leading: widget.todo.completed
                 ? Icon(Icons.check, color: Colors.green)
@@ -31,7 +31,7 @@ class _TodoViewState extends State<TodoView> {
         ),
       ),
       direction: DismissDirection.endToStart,
-      onDismissed: (_) => widget.onRemove(),
+      onDismissed: (_) => widget.onRemove().whenComplete(() => setState(() {})),
       background: Padding(
         padding: EdgeInsets.all(5.0),
         child: Container(

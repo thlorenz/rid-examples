@@ -1,12 +1,12 @@
 import 'generated/rid_generated.dart';
 import 'dart:io';
 
-printStatus(Pointer<Model> model) {
-  final todos = model.todos;
+printStatus(Pointer<Store> store) {
+  final todos = store.todos;
   final total = todos.length;
 
-  final filter = model.filter;
-  final matchingTodos = model.filtered_todos();
+  final filter = store.filter;
+  final matchingTodos = store.filtered_todos();
 
   final Pointer<Todo> todo = todos[0];
 
@@ -22,7 +22,7 @@ printStatus(Pointer<Model> model) {
   matchingTodos.dispose();
 }
 
-bool handleCommand(Pointer<Model> model, String line) {
+Future<bool> handleCommand(Pointer<Store> model, String line) async {
   String cmd;
   String payload;
 
@@ -36,36 +36,36 @@ bool handleCommand(Pointer<Model> model, String line) {
 
   switch (cmd) {
     case "add":
-      model.msgAddTodo(payload);
+      await model.msgAddTodo(payload);
       break;
     case "del":
-      model.msgRemoveTodo(int.parse(payload));
+      await model.msgRemoveTodo(int.parse(payload));
       break;
     case "cmp":
-      model.msgCompleteTodo(int.parse(payload));
+      await model.msgCompleteTodo(int.parse(payload));
       break;
     case "tog":
-      model.msgToggleTodo(int.parse(payload));
+      await model.msgToggleTodo(int.parse(payload));
       break;
     case "rst":
       model.msgRestartTodo(int.parse(payload));
       break;
     case "fil":
       final filter = payload == "cmp"
-          ? RidFilter.Completed
+          ? Filter.Completed
           : payload == "pen"
-              ? RidFilter.Pending
-              : RidFilter.All;
-      model.msgSetFilter(filter.index);
+              ? Filter.Pending
+              : Filter.All;
+      await model.msgSetFilter(filter);
       break;
     case "ca":
-      model.msgCompleteAll();
+      await model.msgCompleteAll();
       break;
     case "dc":
-      model.msgRemoveCompleted();
+      await model.msgRemoveCompleted();
       break;
     case "ra":
-      model.msgRestartAll();
+      await model.msgRestartAll();
       break;
 
     default:
@@ -89,13 +89,13 @@ printCommands() {
   print("  q                 -- to quit");
 }
 
-void main(List<String> args) {
-  final model = rid_ffi.initModel();
+void main(List<String> args) async {
+  final store = rid_ffi.createStore();
   {
-    model.msgAddTodo("Complete this Todo via:     cmp 1");
-    model.msgAddTodo("Delete this Todo via:       del 2");
-    model.msgAddTodo("Toggle this Todo via:       tog 3");
-    model.msgAddTodo("Restart the first Todo via: rst 1");
+    await store.msgAddTodo("Complete this Todo via:     cmp 1");
+    await store.msgAddTodo("Delete this Todo via:       del 2");
+    await store.msgAddTodo("Toggle this Todo via:       tog 3");
+    await store.msgAddTodo("Restart the first Todo via: rst 1");
 
     String? input;
     bool ok = true;
@@ -104,7 +104,11 @@ void main(List<String> args) {
       if (ok) {
         print("\x1B[2J\x1B[0;0H");
       }
-      printStatus(model);
+
+      // Not strictly necessary to run this locked since no threads are
+      // updating our store in the background, but good practice.
+      store.runLocked(printStatus);
+
       printCommands();
       stdout.write("\n> ");
       input = stdin.readLineSync();
@@ -112,9 +116,9 @@ void main(List<String> args) {
         break;
       }
       if (input != null && input.length > 1) {
-        ok = handleCommand(model, input.trim());
+        ok = await handleCommand(store, input.trim());
       }
     }
   }
-  model.dispose();
+  store.dispose();
 }

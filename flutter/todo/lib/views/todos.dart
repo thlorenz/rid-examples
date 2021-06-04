@@ -5,8 +5,8 @@ import 'package:todo/views/todo.dart';
 class TodosView extends StatelessWidget {
   final RidVec_Pointer_Todo todos;
 
-  final void Function(int) onToggleTodo;
-  final void Function(int) onRemoveTodo;
+  final Future<void> Function(int) onToggleTodo;
+  final Future<void> Function(int) onRemoveTodo;
 
   const TodosView(this.todos,
       {required this.onToggleTodo, required this.onRemoveTodo, Key? key})
