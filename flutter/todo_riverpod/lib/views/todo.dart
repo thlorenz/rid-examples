@@ -4,12 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:todo_riverpod/providers.dart';
 import 'package:todo_riverpod/ridpod.dart';
 
-  final Pointer<Todo> todo;
-  const TodoView(this.todo, {Key? key}) : super(key: key);
 class TodoView extends RidConsumerWidget {
+  const TodoView({Key? key}) : super(key: key);
 
   @override
   Widget buildLocked(BuildContext context, ScopedReader watch) {
+    final todo = watch(scopedTodoProvider);
     debugPrint('build: ${todo.title}');
     return Dismissible(
       key: Key("Todo ${todo.id}"),

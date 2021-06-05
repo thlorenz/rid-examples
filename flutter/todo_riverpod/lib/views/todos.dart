@@ -16,7 +16,14 @@ class TodosView extends RidConsumerWidget {
       child: ListView.builder(
         itemCount: todos.length,
         itemBuilder: (context, index) {
-          return TodoView(todos[index]);
+          return ProviderScope(
+            overrides: [
+              scopedTodoProvider.overrideAs((ref) {
+                return watch(filteredTodosProvider).elementAt(index);
+              })
+            ],
+            child: const TodoView(),
+          );
         },
       ),
     );

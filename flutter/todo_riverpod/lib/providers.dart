@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:plugin/plugin.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -8,6 +9,7 @@ final store = rid_ffi.createStore();
 // -----------------
 class FilterNotifier extends StateNotifier<RidFilter> {
   final Pointer<Store> _store;
+
   FilterNotifier(this._store) : super(RidFilter.All);
 
   setFilter(RidFilter val) async {
@@ -24,7 +26,8 @@ final filterProvider = StateNotifierProvider<FilterNotifier, RidFilter>(
 // -----------------
 class TodosNotifier extends StateNotifier<Pointer<Vec_Todo>> {
   final Pointer<Store> _store;
-  TodosNotifier(this._store) : super(Pointer<Vec_Todo>.fromAddress(0)) {
+
+  TodosNotifier(this._store) : super(_store.todos) {
     replyChannel.stream
         .where((reply) =>
             reply.type == Reply.AddedTodo ||
@@ -36,7 +39,9 @@ class TodosNotifier extends StateNotifier<Pointer<Vec_Todo>> {
   // For the below three we don't need to refresh the state since this is
   // taken care of by the stream subscription above
   addTodo(String title) => _store.msgAddTodo(title);
+
   removeTodo(int id) => _store.msgRemoveTodo(id);
+
   removeCompleted() => _store.msgRemoveCompleted();
 
   // We could include these cases in the stream subscription as well, but
@@ -88,3 +93,15 @@ final filteredTodosProvider = Provider<List<Pointer<Todo>>>((ref) {
   // TODO(thlorenz): we still don't know if the store will get locked again while rendering.
   return todos;
 });
+
+final todoByIdProvider = Provider.family<Pointer<Todo>, int>((ref, id) {
+  final todoVec = ref.watch(todosProvider);
+  for (final todo in todoVec.iter()) {
+    if (todo.id == id) return todo;
+  }
+
+  debugPrint('Todo with $id does not exist');
+  throw ArgumentError.notNull("todo");
+});
+
+final scopedTodoProvider = ScopedProvider<Pointer<Todo>>(null);
