@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:plugin/plugin.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:todo_riverpod/providers.dart';
+import 'package:todo_riverpod/ridpod.dart';
 
-class TodoView extends StatelessWidget {
   final Pointer<Todo> todo;
   const TodoView(this.todo, {Key? key}) : super(key: key);
+class TodoView extends RidConsumerWidget {
 
   @override
-  Widget build(BuildContext context) {
+  Widget buildLocked(BuildContext context, ScopedReader watch) {
     debugPrint('build: ${todo.title}');
     return Dismissible(
       key: Key("Todo ${todo.id}"),
