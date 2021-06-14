@@ -82,6 +82,7 @@ class _TodosPageState extends State<TodosPage> with StateAsync<TodosPage> {
     debugPrint('  build: TodosPage');
     final RidFilter filter = _store.filter;
     final filteredTodos = _store.filtered_todos().toDart();
+    final settings = _store.settings.toDart();
     debugPrint("filtered: \n  ${filteredTodos.join('\n  ')}");
 
     return SafeArea(
@@ -111,12 +112,12 @@ class _TodosPageState extends State<TodosPage> with StateAsync<TodosPage> {
         ),
         drawer: Drawer(
           child: Menu(
+            settings,
             restartAll: () => setStateAsync(_store.msgRestartAll),
             completeAll: () => setStateAsync(_store.msgCompleteAll),
             removeCompleted: () => setStateAsync(_store.msgRemoveCompleted),
-            autoExpireCompleted: () => _store.auto_expire_completed_todos,
             setAutoExpireCompleted: (val) =>
-                _store.msgSetAutoExpireCompletedTodos(val),
+                setStateAsync(() => _store.msgSetAutoExpireCompletedTodos(val)),
           ),
         ),
         bottomNavigationBar: BottomAppBar(
@@ -158,6 +159,7 @@ class _TodosPageState extends State<TodosPage> with StateAsync<TodosPage> {
         ),
         body: TodosView(
           filteredTodos,
+          settings,
           getTodoById: (id) => (_store.todo_by_id(id))?.toDart(),
           onToggleTodo: (id) async {
             await _store.msgToggleTodo(id);
@@ -167,7 +169,6 @@ class _TodosPageState extends State<TodosPage> with StateAsync<TodosPage> {
             await _store.msgRemoveTodo(id);
             setState(() {});
           },
-          getAutoExpireCompleted: () => _store.auto_expire_completed_todos,
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
         floatingActionButton: FloatingActionButton(

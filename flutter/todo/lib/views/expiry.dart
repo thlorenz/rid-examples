@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:plugin/plugin.dart';
 
-final double completedExpiryMillis = rid_ffi.completedExpiryMillis().toDouble();
-
-Color expiryColor(double remaining) {
+Color expiryColor(double completedExpiryMillis, double remaining) {
   return remaining > completedExpiryMillis * 0.80
       ? Colors.greenAccent
       : remaining > completedExpiryMillis * 0.60
@@ -16,9 +13,13 @@ Color expiryColor(double remaining) {
 }
 
 class ExpiryWidget extends StatelessWidget {
+  final double completedExpiryMillis;
   final double remainingMillis;
 
-  const ExpiryWidget({required this.remainingMillis}) : super();
+  const ExpiryWidget({
+    required this.completedExpiryMillis,
+    required this.remainingMillis,
+  }) : super();
 
   Widget build(BuildContext context) {
     final totalWidth = MediaQuery.of(context).size.width * 0.8;
@@ -36,7 +37,7 @@ class ExpiryWidget extends StatelessWidget {
       ),
       child: Container(
         margin: EdgeInsets.only(right: totalWidth - expiryWidth),
-        color: expiryColor(remainingMillis),
+        color: expiryColor(completedExpiryMillis, remainingMillis),
       ),
     );
   }

@@ -12,14 +12,14 @@ const EXPIRY_STEP: u64 = 10;
 // Store
 // -----------------
 #[rid::model]
-#[rid::structs(Todo)]
+#[rid::structs(Todo, Settings)]
 #[rid::enums(Filter)]
 #[derive(Debug, rid::Debug)]
 pub struct Store {
     last_added_id: u32,
     todos: Vec<Todo>,
     filter: Filter,
-    auto_expire_completed_todos: bool,
+    settings: Settings,
 }
 
 #[rid::export]
@@ -54,7 +54,10 @@ impl Store {
             last_added_id: 3,
             todos: vec![first_todo, second_todo, third_todo, fourth_todo],
             filter: Filter::All,
-            auto_expire_completed_todos: false,
+            settings: Settings {
+                auto_expire_completed_todos: false,
+                completed_expiry_millis: COMPLETED_EXPIRY_MILLIS,
+            },
         }
     }
 
@@ -148,7 +151,7 @@ impl Store {
     }
 
     // The below read/write wrappers help with auto complete since procmacros
-    // aren't yet very well supported by the rust analyzer yet
+    // aren't very well supported by the rust analyzer yet
     fn read() -> RwLockReadGuard<'static, Store> {
         store::read()
     }
@@ -158,14 +161,14 @@ impl Store {
     }
 
     pub fn set_auto_expire_completed_todos(&mut self, expire: bool) {
-        self.auto_expire_completed_todos = expire;
+        self.settings.auto_expire_completed_todos = expire;
         if expire {
             thread::spawn(move || {
                 eprintln!(
                     "rust: thread {:?} started auto expiring",
                     thread::current().id()
                 );
-                while Store::read().auto_expire_completed_todos {
+                while Store::read().settings.auto_expire_completed_todos {
                     thread::sleep(time::Duration::from_millis(EXPIRY_STEP));
                     {
                         let ids_to_update: Vec<(u32, bool)> = Store::write()
@@ -188,7 +191,7 @@ impl Store {
                                 Store::write().remove_todo(id);
                                 rid::post(Reply::CompletedTodoExpired);
                             } else {
-                                rid::post(Reply::Tick(format!("{}", id)));
+                                rid::post(Reply::Tick(id.to_string()));
                             }
                         }
                     }
@@ -203,6 +206,16 @@ impl Store {
 }
 
 // -----------------
+// Settings
+// -----------------
+#[rid::model]
+#[derive(Debug, rid::Dart)]
+pub struct Settings {
+    auto_expire_completed_todos: bool,
+    completed_expiry_millis: u64,
+}
+
+// -----------------
 // Todo Model
 // -----------------
 #[rid::model]
@@ -214,15 +227,7 @@ pub struct Todo {
     expiry_millis: u64,
 }
 
-#[rid::export]
 impl Todo {
-    // TODO(thlorenz): need to export from inside impl until exporting functions directly is
-    // implemented
-    #[rid::export(completedExpiryMillis)]
-    pub fn completed_expiry_millis() -> u64 {
-        COMPLETED_EXPIRY_MILLIS
-    }
-
     fn set_completed(&mut self, completed: bool) {
         self.completed = completed;
         self.expiry_millis = COMPLETED_EXPIRY_MILLIS;

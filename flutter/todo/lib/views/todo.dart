@@ -6,30 +6,29 @@ import 'package:todo/views/expiry.dart';
 
 class TodoView extends StatefulWidget with StatefulLock {
   final Todo todo;
+  final Settings settings;
   final Todo? Function(int) getTodoById;
   final Future<void> Function(int) onToggleTodo;
   final Future<void> Function(int) onRemoveTodo;
-  final bool Function() getAutoExpireCompleted;
 
   TodoView(
-    this.todo, {
+    this.todo,
+    this.settings, {
     required this.getTodoById,
     required this.onToggleTodo,
     required this.onRemoveTodo,
-    required this.getAutoExpireCompleted,
   }) : super(key: Key("Todo ${todo.hashCode}"));
 
   @override
-  _TodoViewState createState() => _TodoViewState(todo);
+  _TodoViewState createState() => _TodoViewState(todo, settings);
 }
 
 class _TodoViewState extends State<TodoView> with StateAsync<TodoView> {
   Todo todo;
-  late bool autoExpireCompleted;
+  final Settings settings;
   late final StreamSubscription<PostedReply> expirySub;
-  late final StreamSubscription<PostedReply> expiryConfigSub;
 
-  _TodoViewState(this.todo) : super();
+  _TodoViewState(this.todo, this.settings) : super();
 
   bool _replyIsForThisTodo(PostedReply reply) {
     assert(
@@ -55,18 +54,6 @@ class _TodoViewState extends State<TodoView> with StateAsync<TodoView> {
         setState(() => {todo = update});
       }
     });
-
-    // Auto expire is set via the settings view, however we need to know about
-    // this setting here as well.
-    // A subscription will let us know even though we didn't initiate the
-    // related message.
-    autoExpireCompleted = widget.getAutoExpireCompleted();
-    expiryConfigSub = replyChannel.stream
-        .where((reply) => reply.type == Reply.SetAutoExpireCompletedTodos)
-        .listen((_) {
-      autoExpireCompleted = widget.getAutoExpireCompleted();
-    });
-
     super.initState();
   }
 
@@ -83,9 +70,14 @@ class _TodoViewState extends State<TodoView> with StateAsync<TodoView> {
                   ? Icon(Icons.check, color: Colors.green)
                   : Icon(Icons.calendar_today_rounded),
               title: Text('${todo.title}'),
-              subtitle: autoExpireCompleted && todo.completed
-                  ? ExpiryWidget(remainingMillis: todo.expiry_millis.toDouble())
-                  : null,
+              subtitle:
+                  widget.settings.auto_expire_completed_todos && todo.completed
+                      ? ExpiryWidget(
+                          completedExpiryMillis:
+                              settings.completed_expiry_millis.toDouble(),
+                          remainingMillis: todo.expiry_millis.toDouble(),
+                        )
+                      : null,
             )),
       ),
       direction: DismissDirection.endToStart,
@@ -101,7 +93,6 @@ class _TodoViewState extends State<TodoView> with StateAsync<TodoView> {
   @override
   void dispose() {
     expirySub.cancel();
-    expiryConfigSub.cancel();
     super.dispose();
   }
 }

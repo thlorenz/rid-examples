@@ -3,19 +3,20 @@ import 'package:flutter/widgets.dart';
 import 'package:plugin/generated/rid_generated.dart';
 
 class Menu extends StatelessWidget {
+  final Settings settings;
+
   final void Function() restartAll;
   final void Function() completeAll;
   final void Function() removeCompleted;
 
-  final bool Function() autoExpireCompleted;
-  final Future<void> Function(bool) setAutoExpireCompleted;
+  final void Function(bool) setAutoExpireCompleted;
 
-  const Menu({
+  const Menu(
+    this.settings, {
     required this.restartAll,
     required this.completeAll,
     required this.removeCompleted,
     required this.setAutoExpireCompleted,
-    required this.autoExpireCompleted,
     Key? key,
   }) : super(key: key);
   @override
@@ -44,7 +45,7 @@ class Menu extends StatelessWidget {
             children: [
               Text('Expire Completed'),
               AutoRemoveCompletedWidget(
-                autoExpireCompleted: autoExpireCompleted,
+                autoExpireCompleted: settings.auto_expire_completed_todos,
                 setAutoExpireCompleted: setAutoExpireCompleted,
               ),
             ],
@@ -56,8 +57,8 @@ class Menu extends StatelessWidget {
 }
 
 class AutoRemoveCompletedWidget extends StatefulWidget with StatefulLock {
-  final bool Function() autoExpireCompleted;
-  final Future<void> Function(bool) setAutoExpireCompleted;
+  final bool autoExpireCompleted;
+  final void Function(bool) setAutoExpireCompleted;
 
   const AutoRemoveCompletedWidget({
     Key? key,
@@ -76,10 +77,9 @@ class _AutoRemoveCompletedWidgetState extends State<AutoRemoveCompletedWidget>
   Widget build(BuildContext context) {
     debugPrint('  build: AutoRemoveCompleted');
     return Checkbox(
-      value: widget.autoExpireCompleted(),
+      value: widget.autoExpireCompleted,
       onChanged: (val) {
-        if (val != null)
-          setStateAsync(() => widget.setAutoExpireCompleted(val));
+        if (val != null) widget.setAutoExpireCompleted(val);
       },
     );
   }

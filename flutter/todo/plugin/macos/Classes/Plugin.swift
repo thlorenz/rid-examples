@@ -19,11 +19,14 @@ func dummyCallsToPreventTreeShaking() {
     rid_vec_Todo_len(nil);
     rid_vec_Todo_get(nil, 0);
     rid_store_filter(nil);
-    rid_store_auto_expire_completed_todos(nil);
+    rid_store_settings(nil);
     rid_export_RawStore_filtered_todos(nil);
     rid_export_RawStore_todo_by_id(nil, 0);
     rid_free_vec_Pointer_RawTodo(RidVec_Pointer_RawTodo());
     rid_get_item_Pointer_RawTodo(RidVec_Pointer_RawTodo(), 0);
+    _to_dart_for_Settings();
+    rid_settings_auto_expire_completed_todos(nil);
+    rid_settings_completed_expiry_millis(nil);
     rid_rawtodo_debug(nil);
     rid_rawtodo_debug_pretty(nil);
     rid_rawtodo_display(nil);
@@ -33,7 +36,6 @@ func dummyCallsToPreventTreeShaking() {
     rid_todo_title_len(nil);
     rid_todo_completed(nil);
     rid_todo_expiry_millis(nil);
-    completedExpiryMillis();
     rid_filter_debug(0);
     rid_filter_debug_pretty(0);
     rid_filter_display(0);
