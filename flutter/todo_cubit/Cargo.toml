@@ -1,0 +1,17 @@
+[package]
+name = "todo_cubit"
+version = "0.1.0"
+authors = ["Thorsten Lorenz <thlorenz@gmx.de>"]
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib", "staticlib" ]
+
+[[bin]]
+name = "rid_build"
+path = "rid_build.rs"
+
+[dependencies]
+cbindgen = "0.18.0"
+rid_build = { path = "../../../rid/rid-build" }
+rid = { path = "../../../rid" }
