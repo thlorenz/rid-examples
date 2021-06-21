@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:plugin/plugin.dart';
 import 'package:todo/views/todo.dart';
+import 'package:plugin/generated/rid_api.dart';
 
 class TodosView extends StatelessWidget {
   final List<Todo> todos;

@@ -1,20 +1,21 @@
 use core::time;
 use std::{
-    fmt::Display,
     sync::{RwLockReadGuard, RwLockWriteGuard},
     thread,
 };
 
+use rid::RidStore;
+
 const COMPLETED_EXPIRY_MILLIS: u64 = 7000;
-const EXPIRY_STEP: u64 = 10;
+const EXPIRY_STEP: u64 = 7;
 
 // -----------------
 // Store
 // -----------------
-#[rid::model]
+#[rid::store]
 #[rid::structs(Todo, Settings)]
 #[rid::enums(Filter)]
-#[derive(Debug, rid::Debug)]
+#[derive(Debug)]
 pub struct Store {
     last_added_id: u32,
     todos: Vec<Todo>,
@@ -22,9 +23,7 @@ pub struct Store {
     settings: Settings,
 }
 
-#[rid::export]
-#[rid::structs(Todo)]
-impl Store {
+impl RidStore<Msg> for Store {
     fn create() -> Self {
         let first_todo = Todo {
             id: 0,
@@ -117,7 +116,11 @@ impl Store {
             }
         };
     }
+}
 
+#[rid::export]
+#[rid::structs(Todo)]
+impl Store {
     fn remove_todo(&mut self, id: u32) {
         let mut enumerated = self.todos.iter().enumerate();
         let idx = match enumerated.find(|(_, todo)| todo.id == id) {
@@ -209,7 +212,7 @@ impl Store {
 // Settings
 // -----------------
 #[rid::model]
-#[derive(Debug, rid::Dart)]
+#[derive(Debug)]
 pub struct Settings {
     auto_expire_completed_todos: bool,
     completed_expiry_millis: u64,
@@ -219,7 +222,7 @@ pub struct Settings {
 // Todo Model
 // -----------------
 #[rid::model]
-#[derive(PartialEq, Eq, PartialOrd, Debug, rid::Debug, rid::Display, rid::Dart)]
+#[derive(PartialEq, Eq, PartialOrd, Debug)]
 pub struct Todo {
     id: u32,
     title: String,
@@ -240,38 +243,21 @@ impl Ord for Todo {
     }
 }
 
-impl Display for Todo {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let status = if self.completed { "✓" } else { " " };
-        write!(f, "[{}] ({}) '{}'", status, self.id, self.title)
-    }
-}
-
 // -----------------
 // Filter
 // -----------------
-#[derive(Clone, Debug, rid::Debug, rid::Display)]
-#[repr(C)]
+#[rid::model]
+#[derive(Clone, Debug)]
 pub enum Filter {
     Completed,
     Pending,
     All,
 }
 
-impl Display for Filter {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Filter::Completed => write!(f, "Completed"),
-            Filter::Pending => write!(f, "Pending"),
-            Filter::All => write!(f, "All"),
-        }
-    }
-}
-
 // -----------------
 // Msg
 // -----------------
-#[rid::message(Store, Reply)]
+#[rid::message(Reply)]
 #[rid::enums(Filter)]
 #[derive(Debug)]
 pub enum Msg {

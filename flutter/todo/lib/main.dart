@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:plugin/plugin.dart';
+import 'package:plugin/generated/rid_api.dart';
 import 'package:todo/views/menu.dart';
 import 'package:todo/views/todos.dart';
 
@@ -13,17 +13,12 @@ void configRid() {
 }
 
 void main() async {
-  final store = createStore();
   configRid();
-  await store.msgSetAutoExpireCompletedTodos(false);
-  runApp(TodoApp(store));
+  await Store.instance.msgSetAutoExpireCompletedTodos(false);
+  runApp(TodoApp());
 }
 
 class TodoApp extends StatelessWidget with StatelessLock {
-  final Pointer<RawStore> _store;
-
-  const TodoApp(this._store, {Key? key}) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     debugPrint('  build: TodoApp');
@@ -32,7 +27,7 @@ class TodoApp extends StatelessWidget with StatelessLock {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: TodosPage(this._store, title: 'Todo App'),
+      home: TodosPage(title: 'Todo App'),
       debugShowCheckedModeBanner: false,
     );
   }
@@ -40,22 +35,18 @@ class TodoApp extends StatelessWidget with StatelessLock {
 
 class TodosPage extends StatefulWidget with StatefulLock {
   final String title;
-  final Pointer<RawStore> _store;
 
-  TodosPage(this._store, {Key? key, required this.title}) : super(key: key);
+  TodosPage({Key? key, required this.title}) : super(key: key);
 
   @override
-  _TodosPageState createState() => _TodosPageState(this._store);
+  _TodosPageState createState() => _TodosPageState();
 }
 
 class _TodosPageState extends State<TodosPage> with StateAsync<TodosPage> {
   late final StreamSubscription<PostedReply> sub;
   final _textFieldController = TextEditingController();
   String? addTodoTitle;
-
-  final Pointer<RawStore> _store;
-
-  _TodosPageState(this._store);
+  final Store _store = Store.instance;
 
   @override
   void initState() {
@@ -80,9 +71,9 @@ class _TodosPageState extends State<TodosPage> with StateAsync<TodosPage> {
   @override
   Widget build(BuildContext context) {
     debugPrint('  build: TodosPage');
-    final RidFilter filter = _store.filter;
-    final filteredTodos = _store.filtered_todos().toDart();
-    final settings = _store.settings.toDart();
+    final Filter filter = _store.filter;
+    final filteredTodos = _store.filteredTodos();
+    final settings = _store.settings;
     debugPrint("filtered: \n  ${filteredTodos.join('\n  ')}");
 
     return SafeArea(
@@ -126,7 +117,7 @@ class _TodosPageState extends State<TodosPage> with StateAsync<TodosPage> {
               IconButton(
                 icon: Icon(
                   Icons.calendar_today_rounded,
-                  color: filter == RidFilter.Pending
+                  color: filter == Filter.Pending
                       ? FILTER_SELECTED_COLOR
                       : FILTER_UNSELECTED_COLOR,
                 ),
@@ -137,7 +128,7 @@ class _TodosPageState extends State<TodosPage> with StateAsync<TodosPage> {
               IconButton(
                 icon: Icon(
                   Icons.check,
-                  color: filter == RidFilter.Completed
+                  color: filter == Filter.Completed
                       ? FILTER_SELECTED_COLOR
                       : FILTER_UNSELECTED_COLOR,
                 ),
@@ -147,7 +138,7 @@ class _TodosPageState extends State<TodosPage> with StateAsync<TodosPage> {
               IconButton(
                 icon: Icon(
                   Icons.all_inclusive,
-                  color: filter == RidFilter.All
+                  color: filter == Filter.All
                       ? FILTER_SELECTED_COLOR
                       : FILTER_UNSELECTED_COLOR,
                 ),
@@ -160,7 +151,7 @@ class _TodosPageState extends State<TodosPage> with StateAsync<TodosPage> {
         body: TodosView(
           filteredTodos,
           settings,
-          getTodoById: (id) => (_store.todo_by_id(id))?.toDart(),
+          getTodoById: (id) => _store.todoById(id),
           onToggleTodo: (id) async {
             await _store.msgToggleTodo(id);
             setState(() {});
@@ -178,7 +169,7 @@ class _TodosPageState extends State<TodosPage> with StateAsync<TodosPage> {
             if (addTodoTitle != null && addTodoTitle!.trim().isNotEmpty) {
               await _store.msgAddTodo(addTodoTitle!);
               setState(() {});
-              debugPrint("${_store.debug(true)}");
+              debugPrint("${_store.raw.debug(true)}");
             }
           },
           tooltip: 'Add Todo',

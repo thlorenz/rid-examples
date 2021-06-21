@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:plugin/generated/rid_generated.dart';
+import 'package:plugin/generated/rid_api.dart';
 
 class Menu extends StatelessWidget {
   final Settings settings;
@@ -45,7 +45,7 @@ class Menu extends StatelessWidget {
             children: [
               Text('Expire Completed'),
               AutoRemoveCompletedWidget(
-                autoExpireCompleted: settings.auto_expire_completed_todos,
+                autoExpireCompleted: settings.autoExpireCompletedTodos,
                 setAutoExpireCompleted: setAutoExpireCompleted,
               ),
             ],

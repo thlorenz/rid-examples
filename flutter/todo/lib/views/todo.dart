@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:plugin/plugin.dart';
+import 'package:plugin/generated/rid_api.dart';
 import 'package:todo/views/expiry.dart';
 
 class TodoView extends StatefulWidget with StatefulLock {
@@ -71,11 +71,11 @@ class _TodoViewState extends State<TodoView> with StateAsync<TodoView> {
                   : Icon(Icons.calendar_today_rounded),
               title: Text('${todo.title}'),
               subtitle:
-                  widget.settings.auto_expire_completed_todos && todo.completed
+                  widget.settings.autoExpireCompletedTodos && todo.completed
                       ? ExpiryWidget(
                           completedExpiryMillis:
-                              settings.completed_expiry_millis.toDouble(),
-                          remainingMillis: todo.expiry_millis.toDouble(),
+                              settings.completedExpiryMillis.toDouble(),
+                          remainingMillis: todo.expiryMillis.toDouble(),
                         )
                       : null,
             )),
