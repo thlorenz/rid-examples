@@ -1,28 +1,28 @@
-import 'generated/rid_generated.dart';
+import 'generated/rid_api.dart';
 import 'dart:io';
 
-printStatus(Pointer<Store> store) {
+printStatus(Store store) {
   final todos = store.todos;
   final total = todos.length;
 
   final filter = store.filter;
-  final matchingTodos = store.filtered_todos();
-
-  final Pointer<Todo> todo = todos[0];
-
-  final status = todo.completed ? 'done' : 'pending';
-  print('${todo.title}with id ${todo.id} is $status');
 
   print("Total Todos:     $total");
   print("Filter:          ${filter.display()}");
   print("\nMatching Todos:");
-  for (final todo in matchingTodos.iter()) {
-    print("    ${todo.display()}");
-  }
-  matchingTodos.dispose();
+
+  // NOTE: using raw API here to access `display`.
+  // To do that properly we lock the store while we're iterating.
+  store.raw.runLocked((rawStore) {
+    final matchingTodos = rawStore.filtered_todos();
+    for (final todo in matchingTodos.iter()) {
+      print("    ${todo.display()}");
+    }
+    matchingTodos.dispose();
+  });
 }
 
-Future<bool> handleCommand(Pointer<Store> model, String line) async {
+Future<bool> handleCommand(Store store, String line) async {
   String cmd;
   String payload;
 
@@ -36,19 +36,19 @@ Future<bool> handleCommand(Pointer<Store> model, String line) async {
 
   switch (cmd) {
     case "add":
-      await model.msgAddTodo(payload);
+      await store.msgAddTodo(payload);
       break;
     case "del":
-      await model.msgRemoveTodo(int.parse(payload));
+      await store.msgRemoveTodo(int.parse(payload));
       break;
     case "cmp":
-      await model.msgCompleteTodo(int.parse(payload));
+      await store.msgCompleteTodo(int.parse(payload));
       break;
     case "tog":
-      await model.msgToggleTodo(int.parse(payload));
+      await store.msgToggleTodo(int.parse(payload));
       break;
     case "rst":
-      model.msgRestartTodo(int.parse(payload));
+      store.msgRestartTodo(int.parse(payload));
       break;
     case "fil":
       final filter = payload == "cmp"
@@ -56,16 +56,16 @@ Future<bool> handleCommand(Pointer<Store> model, String line) async {
           : payload == "pen"
               ? Filter.Pending
               : Filter.All;
-      await model.msgSetFilter(filter);
+      await store.msgSetFilter(filter);
       break;
     case "ca":
-      await model.msgCompleteAll();
+      await store.msgCompleteAll();
       break;
     case "dc":
-      await model.msgRemoveCompleted();
+      await store.msgRemoveCompleted();
       break;
     case "ra":
-      await model.msgRestartAll();
+      await store.msgRestartAll();
       break;
 
     default:
@@ -90,7 +90,7 @@ printCommands() {
 }
 
 void main(List<String> args) async {
-  final store = rid_ffi.createStore();
+  final store = Store.instance;
   {
     await store.msgAddTodo("Complete this Todo via:     cmp 1");
     await store.msgAddTodo("Delete this Todo via:       del 2");
@@ -105,9 +105,7 @@ void main(List<String> args) async {
         print("\x1B[2J\x1B[0;0H");
       }
 
-      // Not strictly necessary to run this locked since no threads are
-      // updating our store in the background, but good practice.
-      store.runLocked(printStatus);
+      printStatus(store);
 
       printCommands();
       stdout.write("\n> ");
