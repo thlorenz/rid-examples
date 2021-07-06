@@ -19,6 +19,7 @@ fn main() {
                 FlutterPlatform::ios(),
                 FlutterPlatform::macos(),
                 FlutterPlatform::android(),
+                FlutterPlatform::linux(),
             ],
         }),
         lib_name,
