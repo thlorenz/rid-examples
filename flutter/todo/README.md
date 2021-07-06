@@ -15,7 +15,7 @@ Use the below scripts to get the app ready to run with Flutter.
 
 ### 0. Make sure you have the dependencies
 
-```
+```sh
 # Install the nightly to use some needed features
 rustup toolchain install nightly
 # Switch to the nightly 
@@ -26,8 +26,8 @@ cargo install cargo-expand
 
 On linux, you also need
 
-```
-sudo apt-get install libclang-dev
+```sh
+sudo apt-get install libclang-dev jq
 ```
 
 for flutter's `ffigen`.
@@ -36,7 +36,7 @@ for flutter's `ffigen`.
 
 Before generating the glue code for the first time, you need to run `flutter pub get` on the plugin folder
 
-```
+```sh
 cd plugin
 flutter pub get
 ```
@@ -50,8 +50,16 @@ flutter pub get
 Run any of the below three to build the binary for the specific device and have it placed into
 the devices specific plugin folder.
 
+For macos:
+
 ```sh
 ./sh/macos
+```
+
+For linux:
+
+```sh
+./sh/linux
 ```
 
 ### 3. Run with Flutter
@@ -62,10 +70,16 @@ Run on the device.
 flutter run -d macos
 ```
 
+```sh
+flutter run -d linux
+```
+
 For linux, you should pass the path to `libtodo.so`:
 
+On `~/rid-examples/flutter/todo$`:
+
 ```
-LD_LIBRARY_PATH=~/rid-examples/flutter/todo/target/debug flutter run -d linux
+LD_LIBRARY_PATH=$PWD/plugin/linux flutter run -d linux
 ```
 
 ### 4. Develop
