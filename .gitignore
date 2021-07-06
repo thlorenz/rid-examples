@@ -30,6 +30,10 @@ lib/generated_plugin_registrant.dart
 **/android/local.properties
 **/android/**/GeneratedPluginRegistrant.java
 
+# Linux related
+**/linux/**/*.so
+**/linux/**/*.a
+
 # iOS/XCode related
 **/ios/**/*.mode1v3
 **/ios/**/*.mode2v3
