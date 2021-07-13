@@ -52,7 +52,12 @@ add_executable(${BINARY_NAME}
   "${FLUTTER_MANAGED_DIR}/generated_plugin_registrant.cc"
 )
 apply_standard_settings(${BINARY_NAME})
-target_link_libraries(${BINARY_NAME} PRIVATE flutter)
+find_library(TODO_LIBRARY
+    NAMES todo libtodo
+    HINTS "${CMAKE_CURRENT_SOURCE_DIR}/../plugin/linux"
+)
+
+target_link_libraries(${BINARY_NAME} PRIVATE flutter ${TODO_LIBRARY})
 target_link_libraries(${BINARY_NAME} PRIVATE PkgConfig::GTK)
 add_dependencies(${BINARY_NAME} flutter_assemble)
 # Only the install-generated bundle's copy of the executable will launch
