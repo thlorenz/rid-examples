@@ -1,17 +1,10 @@
 mod alloc;
 mod replies;
 
-use core::time;
-use serde::Serialize;
-use std::{
-    sync::{RwLockReadGuard, RwLockWriteGuard},
-    thread,
-};
-
 use rid::RidStore;
+use serde::Serialize;
 
 const COMPLETED_EXPIRY_MILLIS: u64 = 7000;
-const EXPIRY_STEP: u64 = 7;
 
 // -----------------
 // Store
@@ -114,9 +107,8 @@ impl RidStore<Msg> for Store {
                 self.filter = filter;
                 replies::post(Reply::SetFilter(req_id));
             }
-            SetAutoExpireCompletedTodos(expire) => {
-                self.set_auto_expire_completed_todos(expire);
-                replies::post(Reply::SetAutoExpireCompletedTodos(req_id));
+            SetAutoExpireCompletedTodos(_) => {
+                panic!("The Auto Expire Todos feature has been disabled in the WASM version")
             }
         };
     }
@@ -161,60 +153,6 @@ impl Store {
     #[rid::export]
     fn todo_by_id(&self, id: u32) -> Option<&Todo> {
         self.todos.iter().find(|x| x.id == id)
-    }
-
-    // The below read/write wrappers help with auto complete since procmacros
-    // aren't very well supported by the rust analyzer yet
-    fn read() -> RwLockReadGuard<'static, Store> {
-        store::read()
-    }
-
-    fn write() -> RwLockWriteGuard<'static, Store> {
-        store::write()
-    }
-
-    pub fn set_auto_expire_completed_todos(&mut self, expire: bool) {
-        self.settings.auto_expire_completed_todos = expire;
-        if expire {
-            thread::spawn(move || {
-                eprintln!(
-                    "rust: thread {:?} started auto expiring",
-                    thread::current().id()
-                );
-                while Store::read().settings.auto_expire_completed_todos {
-                    thread::sleep(time::Duration::from_millis(EXPIRY_STEP));
-                    {
-                        let ids_to_update: Vec<(u32, bool)> = Store::write()
-                            .todos
-                            .iter_mut()
-                            .filter(|x| x.completed)
-                            .map(|x: &mut Todo| {
-                                let next_value = x.expiry_millis - EXPIRY_STEP;
-                                if next_value <= 0 {
-                                    (x.id, true)
-                                } else {
-                                    x.expiry_millis = next_value;
-                                    (x.id, false)
-                                }
-                            })
-                            .collect();
-
-                        for (id, remove) in ids_to_update {
-                            if remove {
-                                Store::write().remove_todo(id);
-                                replies::post(Reply::CompletedTodoExpired);
-                            } else {
-                                replies::post(Reply::Tick(id.to_string()));
-                            }
-                        }
-                    }
-                }
-                eprintln!(
-                    "rust: thread {:?} stopped auto expiring",
-                    thread::current().id()
-                );
-            });
-        }
     }
 }
 
@@ -302,7 +240,6 @@ pub enum Reply {
     RestartedAll(u64),
 
     SetFilter(u64),
-    SetAutoExpireCompletedTodos(u64),
 
     // Application Events
     CompletedTodoExpired,

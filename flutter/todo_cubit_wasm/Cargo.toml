@@ -17,3 +17,7 @@ rid_build = { path = "../../../rid/rid-build" }
 rid = { path = "../../../rid" }
 serde = "1.0.123"
 serde_json = "1.0.64"
+
+# https://rustwasm.github.io/book/reference/code-size.html
+[profile.release]
+opt-level = 'z'

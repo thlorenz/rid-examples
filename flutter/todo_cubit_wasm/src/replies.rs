@@ -83,7 +83,6 @@ impl From<Reply> for ReplyStruct {
             Reply::CompletedAll(req_id) => ReplyStruct::with_req_id(6, req_id),
             Reply::RestartedAll(req_id) => ReplyStruct::with_req_id(7, req_id),
             Reply::SetFilter(req_id) => ReplyStruct::with_req_id(8, req_id),
-            Reply::SetAutoExpireCompletedTodos(req_id) => ReplyStruct::with_req_id(9, req_id),
             Reply::CompletedTodoExpired => Self {
                 ty: 10,
                 req_id: 0,

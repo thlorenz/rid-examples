@@ -8,6 +8,9 @@ environment:
 
 wasmjsgen:
   comments: false
+  allocate: 'rid_malloc'
+  deallocate: 'rid_free'
+  reallocate: 'rid_realloc'
   output: 'lib/generated/ffigen_binding.dart'
   headers:
     entry-points:

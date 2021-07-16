@@ -4,7 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/services.dart';
 import 'package:universal_io/io.dart';
 
-String HTTP_ROOT = window.location.href;
+String HTTP_ROOT = window.location.href.replaceFirst(RegExp('#/\$'), '');
 Future<Uint8List> loadWasmFromNetwork(String wasmFile) async {
   final path = '$HTTP_ROOT/$wasmFile';
   try {

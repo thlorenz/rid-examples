@@ -16,7 +16,7 @@ void configRid() {
   RID_DEBUG_REPLY = (reply) => debugPrint('$reply');
 }
 
-const WASM_FILE = 'target_wasm/wasm32-unknown-unknown/debug/todo_cubit.wasm';
+const WASM_FILE = 'todo_cubit.wasm';
 void main() async {
   // HTTP_HOST = 'localhost:8080';
   await initWasm(WASM_FILE);
