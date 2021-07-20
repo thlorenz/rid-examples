@@ -1,4 +1,4 @@
-use rid_build::{build, BuildConfig, BuildTarget, FlutterConfig, FlutterPlatform, Project};
+use rid_build::{build, BuildConfig, BuildTarget, FlutterConfig, Project};
 use std::env;
 
 fn main() {
@@ -15,11 +15,8 @@ fn main() {
         target: BuildTarget::Debug,
         project: Project::Flutter(FlutterConfig {
             plugin_name: "plugin".to_string(),
-            platforms: vec![
-                FlutterPlatform::ios(),
-                FlutterPlatform::macos(),
-                FlutterPlatform::android(),
-            ],
+            // TODO: once rid itself supports WASM we need to add web architecture here
+            platforms: vec![],
         }),
         lib_name,
         crate_name,
