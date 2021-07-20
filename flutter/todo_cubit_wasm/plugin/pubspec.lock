@@ -194,12 +194,12 @@ packages:
     source: hosted
     version: "2.0.0"
   wasmjsgen:
-    dependency: "direct dev"
+    dependency: "direct main"
     description:
-      path: "../../../../wasmjsgen"
-      relative: true
-    source: path
-    version: "4.0.0-dev.2"
+      name: wasmjsgen
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.0.4"
   yaml:
     dependency: transitive
     description:
