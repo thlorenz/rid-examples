@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+ROOT=$DIR/..
+
+cargo build --target wasm32-unknown-unknown --lib --target-dir target_wasm
+
+mv $ROOT/target_wasm/wasm32-unknown-unknown/debug/todo_cubit.wasm  $ROOT/todo_cubit.wasm

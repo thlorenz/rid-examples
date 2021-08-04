@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+flutter build web --web-renderer html --profile --dart-define=Dart2jsOptimization=O0
+$DIR/wasm-release
+
+(cd $DIR/../build/web && http-server)
