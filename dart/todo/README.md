@@ -21,7 +21,7 @@ What the Model annotations communicate to _rid_:
 #[rid::model]                 // this is a model and all its fields should be accessible from Dart
 #[rid::structs(Todo)]         // the referenced Todo type is a struct
 #[rid::enums(Filter)]         // the referenced Filter type is an enum
-#[derive(Debug, rid::Debug)]  // expose a `model.debug(pretty?)` function to Dart 
+#[derive(Debug)]              // expose a `model.debug(pretty?)` function to Dart 
 pub struct Model {
     last_added_id: u32,
     todos: Vec<Todo>,
