@@ -20,8 +20,6 @@ Use the below scripts to get the app ready to run with Flutter.
 rustup toolchain install nightly
 # Switch to the nightly 
 rustup default nightly
-# cargo-expand is needed
-cargo install cargo-expand
 ```
 
 On linux, you also need
