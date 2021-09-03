@@ -1,0 +1,145 @@
+// Mostly generated via: https://transform.tools/json-to-rust-serde
+use serde::{Deserialize, Serialize};
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ApiRoot {
+    pub kind: String,
+    pub data: Data,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Data {
+    pub after: serde_json::Value,
+    pub dist: i64,
+    pub modhash: String,
+    pub geo_filter: String,
+    pub children: Vec<Children>,
+    pub before: serde_json::Value,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Children {
+    pub kind: String,
+    pub data: Data2,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Data2 {
+    pub approved_at_utc: serde_json::Value,
+    pub subreddit: String,
+    pub selftext: String,
+    pub author_fullname: String,
+    pub saved: bool,
+    pub mod_reason_title: serde_json::Value,
+    pub gilded: i64,
+    pub clicked: bool,
+    pub title: String,
+    pub link_flair_richtext: Vec<serde_json::Value>,
+    pub subreddit_name_prefixed: String,
+    pub hidden: bool,
+    pub pwls: i64,
+    pub link_flair_css_class: String,
+    pub downs: i64,
+    pub thumbnail_height: serde_json::Value,
+    pub top_awarded_type: serde_json::Value,
+    pub hide_score: bool,
+    pub name: String,
+    pub quarantine: bool,
+    pub link_flair_text_color: String,
+    pub upvote_ratio: f64,
+    pub author_flair_background_color: serde_json::Value,
+    pub subreddit_type: String,
+    pub ups: i64,
+    pub total_awards_received: i64,
+    pub media_embed: MediaEmbed,
+    pub thumbnail_width: serde_json::Value,
+    pub author_flair_template_id: serde_json::Value,
+    pub is_original_content: bool,
+    pub user_reports: Vec<serde_json::Value>,
+    pub secure_media: serde_json::Value,
+    pub is_reddit_media_domain: bool,
+    pub is_meta: bool,
+    pub category: serde_json::Value,
+    pub secure_media_embed: SecureMediaEmbed,
+    pub link_flair_text: String,
+    pub can_mod_post: bool,
+    pub score: i64,
+    pub approved_by: serde_json::Value,
+    pub is_created_from_ads_ui: bool,
+    pub author_premium: bool,
+    pub thumbnail: String,
+    pub edited: bool,
+    pub author_flair_css_class: serde_json::Value,
+    pub author_flair_richtext: Vec<serde_json::Value>,
+    pub gildings: Gildings,
+    pub content_categories: serde_json::Value,
+    pub is_self: bool,
+    pub mod_note: serde_json::Value,
+    pub created: f64,
+    pub link_flair_type: String,
+    pub wls: i64,
+    pub removed_by_category: serde_json::Value,
+    pub banned_by: serde_json::Value,
+    pub author_flair_type: String,
+    pub domain: String,
+    pub allow_live_comments: bool,
+    pub selftext_html: String,
+    pub likes: serde_json::Value,
+    pub suggested_sort: serde_json::Value,
+    pub banned_at_utc: serde_json::Value,
+    pub view_count: serde_json::Value,
+    pub archived: bool,
+    pub no_follow: bool,
+    pub is_crosspostable: bool,
+    pub pinned: bool,
+    #[serde(rename = "over_18")]
+    pub over18: bool,
+    pub all_awardings: Vec<serde_json::Value>,
+    pub awarders: Vec<serde_json::Value>,
+    pub media_only: bool,
+    pub link_flair_template_id: String,
+    pub can_gild: bool,
+    pub spoiler: bool,
+    pub locked: bool,
+    pub author_flair_text: serde_json::Value,
+    pub treatment_tags: Vec<serde_json::Value>,
+    pub visited: bool,
+    pub removed_by: serde_json::Value,
+    pub num_reports: serde_json::Value,
+    pub distinguished: serde_json::Value,
+    pub subreddit_id: String,
+    pub author_is_blocked: bool,
+    pub mod_reason_by: serde_json::Value,
+    pub removal_reason: serde_json::Value,
+    pub link_flair_background_color: String,
+    pub id: String,
+    pub is_robot_indexable: bool,
+    pub report_reasons: serde_json::Value,
+    pub author: String,
+    pub discussion_type: serde_json::Value,
+    pub num_comments: i64,
+    pub send_replies: bool,
+    pub whitelist_status: String,
+    pub contest_mode: bool,
+    pub mod_reports: Vec<serde_json::Value>,
+    pub author_patreon_flair: bool,
+    pub author_flair_text_color: serde_json::Value,
+    pub permalink: String,
+    pub parent_whitelist_status: String,
+    pub stickied: bool,
+    pub url: String,
+    pub subreddit_subscribers: i64,
+    pub created_utc: f64,
+    pub num_crossposts: i64,
+    pub media: serde_json::Value,
+    pub is_video: bool,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct MediaEmbed {}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SecureMediaEmbed {}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Gildings {}
