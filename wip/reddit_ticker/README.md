@@ -21,6 +21,19 @@ the devices specific plugin folder.
 ./sh/macos
 ```
 
+### 2.1
+
+Enable Client Network Access for macOS.
+
+Add the following to `macos/Runner/DebugProfile.entitlements` and
+`macos/Runner/Release.entitlements`, from [stackoverflow
+answer](https://stackoverflow.com/a/61201081/97443)
+
+```xml
+<key>com.apple.security.network.client</key>
+<true/>
+```
+
 ### 3. Run with Flutter
 
 Run on the device.
