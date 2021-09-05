@@ -1,0 +1,4 @@
+lib/generated/*
+pubspec.lock
+target/
+Cargo.lock

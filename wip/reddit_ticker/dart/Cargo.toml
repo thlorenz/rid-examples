@@ -1,0 +1,28 @@
+[package]
+name = "reddit_ticker"
+version = "0.1.0"
+authors = ["Thorsten Lorenz <thlorenz@gmx.de>"]
+edition = "2018"
+
+[lib]
+name = "reddit_ticker"
+crate-type = ["cdylib"]
+path = "src/app.rs"
+doctest = false
+test = false
+
+[[bin]]
+name = "rid_build"
+path = "rid_build.rs"
+
+[dependencies]
+rid = { path = "../../../../rid" }
+rid_build = { path = "../../../../rid/rid-build" }
+
+ureq = { version = "2.0.2", features = [ "json" ] }
+serde = { version = "1.0.123", features = [ "derive" ] }
+serde_json = "1.0.64"
+anyhow = "1.0.38"
+
+[build-dependencies]
+rid_build = { path = "../../../../rid/rid-build" }

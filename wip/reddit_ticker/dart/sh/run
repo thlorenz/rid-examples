@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+dart                          \
+  --enable-asserts            \
+  --packages=.packages        \
+  package:dart_reddit_ticker/main.dart 
