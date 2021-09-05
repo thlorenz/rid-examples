@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+MACOS_TARGETS=aarch64-apple-ios
+
+TARGET_DIR=`cargo metadata --format-version 1 --no-deps | jq ".target_directory" | xargs echo`
+PROJECT_NAME=`cargo metadata --format-version 1 | jq ".resolve.root" | xargs echo | cut -d ' ' -f1`
+LIB_NAME=lib$PROJECT_NAME.a
+
+# <root>/target/universal/debug
+UNIVERSAL_DEBUG_DIR="$TARGET_DIR/debug"
+FLUTTER_MACOS_DIR="$DIR/../plugin/macos"
+
+LIB_SOURCE_FILE="$UNIVERSAL_DEBUG_DIR/$LIB_NAME"
+LIB_TARGET_FILE="$FLUTTER_MACOS_DIR/$LIB_NAME"
+
+cargo build && \
+  cp $LIB_SOURCE_FILE $LIB_TARGET_FILE

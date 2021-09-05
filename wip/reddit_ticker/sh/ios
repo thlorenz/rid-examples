@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+IOS_TARGETS=x86_64-apple-ios
+
+# Alternative not using jq
+# WORKSPACE_CARGO_TOML=`cargo locate-project --workspace --message-format plain`
+# WORKSPACE_ROOT=$(dirname "${WORKSPACE_CARGO_TOML}")
+# TARGET_DIR=$WORKSPACE_ROOT/target
+
+TARGET_DIR=`cargo metadata --format-version 1 --no-deps | jq ".target_directory" | xargs echo`
+PROJECT_NAME=`cargo metadata --format-version 1 | jq ".resolve.root" | xargs echo | cut -d ' ' -f1`
+LIB_NAME=lib$PROJECT_NAME.a
+
+# <root>/target/universal/debug
+UNIVERSAL_DEBUG_DIR="$TARGET_DIR/universal/debug"
+FLUTTER_IOS_DIR="$DIR/../plugin/ios"
+
+LIB_SOURCE_FILE="$UNIVERSAL_DEBUG_DIR/$LIB_NAME"
+LIB_TARGET_FILE="$FLUTTER_IOS_DIR/$LIB_NAME"
+
+cargo lipo --targets $IOS_TARGETS && \
+  cp $LIB_SOURCE_FILE $LIB_TARGET_FILE
