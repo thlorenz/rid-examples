@@ -151,12 +151,12 @@ pub struct Post {
     id: String,
     title: String,
     url: String,
-    scores: Vec<i64>,
+    scores: Vec<i32>,
 }
 
 const API_INFO_URL: &str = "https://api.reddit.com/api/info";
 
-fn query_score(id: &str) -> Result<i64, ureq::Error> {
+fn query_score(id: &str) -> Result<i32, ureq::Error> {
     let url = format!("{}?id={}", API_INFO_URL, id);
     let api_response: ApiRoot = ureq::get(&url)
         .set("User-Agent", "reddit-score")

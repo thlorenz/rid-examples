@@ -18,5 +18,5 @@ pub struct Children {
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Data2 {
-    pub score: i64,
+    pub score: i32,
 }

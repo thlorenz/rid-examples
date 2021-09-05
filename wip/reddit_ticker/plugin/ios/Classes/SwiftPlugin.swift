@@ -32,7 +32,7 @@ func dummyCallsToPreventTreeShaking() {
     _to_dart_for_Post();
     rid_post_debug(nil);
     rid_post_debug_pretty(nil);
-    __include_dart_for_vec_i64();
+    __include_dart_for_vec_i32();
     rid_post_id(nil);
     rid_post_id_len(nil);
     rid_post_title(nil);
@@ -40,7 +40,7 @@ func dummyCallsToPreventTreeShaking() {
     rid_post_url(nil);
     rid_post_url_len(nil);
     rid_post_scores(nil);
-    rid_len_vec_i64(nil);
-    rid_get_item_vec_i64(nil, 0);
+    rid_len_vec_i32(nil);
+    rid_get_item_vec_i32(nil, 0);
 }
 // <rid:prevent_tree_shake End>
