@@ -18,8 +18,8 @@ func dummyCallsToPreventTreeShaking() {
     __include_dart_for_hash_map_string_post();
     rid_store_posts(nil);
     rid_export_rid_len_hash_map_string_post(nil);
-    rid_export_rid_get_hash_map_string_post(nil, 0);
-    rid_export_rid_contains_key_hash_map_string_post(nil, 0);
+    rid_export_rid_get_hash_map_string_post(nil, nil);
+    rid_export_rid_contains_key_hash_map_string_post(nil, nil);
     rid_export_rid_keys_hash_map_string_post(nil);
     __include_dart_for_ridvec_string();
     rid_free_ridvec_string(RidVec_Pointer_String());
