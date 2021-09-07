@@ -6,6 +6,7 @@ use std::{
     collections::HashMap,
     sync::{RwLockReadGuard, RwLockWriteGuard},
     thread,
+    time::SystemTime,
 };
 
 use reddit_page_response::PageRoot;
@@ -72,7 +73,10 @@ fn start_watching(req_id: u64, url: String) {
 fn try_start_watching(url: String) -> Result<Post> {
     let page =
         query_page(&url).map_err(|err| anyhow!("Failed to get page: {}\nError: {}", url, err))?;
+
+    let added = SystemTime::now();
     let post = Post {
+        added,
         id: page.id,
         title: page.title,
         url: page.url,
@@ -109,6 +113,14 @@ fn poll_posts() {
         for (id, score) in scores {
             let mut store = Store::write();
             let post = store.posts.get_mut(&id).unwrap();
+            let seconds_since_start = SystemTime::now()
+                .duration_since(post.added)
+                .expect("Getting duration")
+                .as_secs();
+            let score = Score {
+                post_added_secs_ago: seconds_since_start,
+                score,
+            };
             post.scores.push(score);
         }
         rid::post(Reply::UpdatedScores);
@@ -146,12 +158,23 @@ pub enum Reply {
 // Reddit Post
 // -----------------
 #[rid::model]
-#[derive(Debug)]
+#[rid::structs(Score)]
+#[derive(Debug, rid::Config)]
 pub struct Post {
+    #[rid(skip)]
+    added: SystemTime,
+
     id: String,
     title: String,
     url: String,
-    scores: Vec<i32>,
+    scores: Vec<Score>,
+}
+
+#[rid::model]
+#[derive(Debug)]
+pub struct Score {
+    post_added_secs_ago: u64,
+    score: i32,
 }
 
 const API_INFO_URL: &str = "https://api.reddit.com/api/info";
