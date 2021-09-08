@@ -5,6 +5,7 @@ import 'package:plugin/generated/rid_api.dart';
 
 import 'package:reddit_ticker/blocs/cubit/add_post_cubit.dart';
 import 'package:reddit_ticker/blocs/cubit/posts_cubit.dart';
+import 'package:reddit_ticker/views/posts.dart';
 
 final REQ_TIMEOUT = const Duration(seconds: 10);
 const URL =
@@ -20,7 +21,7 @@ class RedditTickerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Rust/Flutter Reddit Ticker',
+      title: 'Reddit Ticker',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
@@ -29,7 +30,7 @@ class RedditTickerApp extends StatelessWidget {
           BlocProvider<AddPostCubit>(create: (_) => AddPostCubit()),
           BlocProvider<PostsCubit>(create: (_) => PostsCubit()),
         ],
-        child: RedditTickerPage(title: 'Rust/Flutter Reddit Ticker'),
+        child: RedditTickerPage(title: 'Reddit Ticker'),
       ),
     );
   }
@@ -70,26 +71,25 @@ class _RedditTickerPageState extends State<RedditTickerPage> {
             ],
           ),
         ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Posts will be here shortly',
-              ),
-              const SizedBox(height: 100),
-            ],
+        body: PostsView(),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () => context.read<AddPostCubit>().addPost(URL),
+          tooltip: 'Add URL of Post to Watch',
+          child: BlocListener<AddPostCubit, AddPostState>(
+            listener: (context, state) {
+              if (state is AddPostSucceeded) {
+                context.read<PostsCubit>().refresh();
+              } else if (state is AddPostFailed) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    backgroundColor: Colors.red,
+                    content: Text('Failed to add Post'),
+                  ),
+                );
+              }
+            },
+            child: Icon(Icons.add),
           ),
-        ),
-        floatingActionButton: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            FloatingActionButton(
-              onPressed: () => context.read<AddPostCubit>().addPost(URL),
-              tooltip: 'Add URL of Post to Watch',
-              child: Icon(Icons.add),
-            ),
-          ],
         ),
       ),
     );

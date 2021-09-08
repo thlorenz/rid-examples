@@ -43,4 +43,7 @@ class PostCubit extends Cubit<PostState> {
     await _unsubscribe();
     return super.close();
   }
+
+  // Todo:
+  Future<void> removePost() async {}
 }
