@@ -44,6 +44,11 @@ class PostCubit extends Cubit<PostState> {
     return super.close();
   }
 
-  // Todo:
-  Future<void> removePost() async {}
+  Future<void> stopWatching() async {
+    assert(state is PostActive, 'Can only remove active post');
+    final post = (state as PostActive).post;
+    await _store.msgStopWatching(post.id).then(_refreshState);
+    // NOTE: changing state only, but no other entity is listening to it
+    emit(PostRemoved(post.id, post.url));
+  }
 }

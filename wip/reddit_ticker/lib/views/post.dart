@@ -40,7 +40,7 @@ class PostView extends StatelessWidget {
             ),
           ),
           confirmDismiss: (_) =>
-              context.read<PostCubit>().removePost().then((_) => true),
+              context.read<PostCubit>().stopWatching().then((_) => true),
           background: Padding(
             padding: EdgeInsets.all(5.0),
             child: Container(color: Colors.red),
