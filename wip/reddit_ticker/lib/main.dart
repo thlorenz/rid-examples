@@ -5,11 +5,12 @@ import 'package:plugin/generated/rid_api.dart';
 
 import 'package:reddit_ticker/blocs/cubit/add_post_cubit.dart';
 import 'package:reddit_ticker/blocs/cubit/posts_cubit.dart';
+import 'package:reddit_ticker/views/add_post.dart';
 import 'package:reddit_ticker/views/posts.dart';
 
 final REQ_TIMEOUT = const Duration(seconds: 10);
 const URL =
-    'https://www.reddit.com/r/rust/comments/phr5n2/formally_implement_let_chains/';
+    'https://www.reddit.com/r/FlutterDev/comments/pk9uzs/magic_url_authentication_with_flutter_and_not/';
 
 void main(List<String> args) async {
   final store = Store.instance;
@@ -72,25 +73,7 @@ class _RedditTickerPageState extends State<RedditTickerPage> {
           ),
         ),
         body: PostsView(),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () => context.read<AddPostCubit>().addPost(URL),
-          tooltip: 'Add URL of Post to Watch',
-          child: BlocListener<AddPostCubit, AddPostState>(
-            listener: (context, state) {
-              if (state is AddPostSucceeded) {
-                context.read<PostsCubit>().refresh();
-              } else if (state is AddPostFailed) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    backgroundColor: Colors.red,
-                    content: Text('Failed to add Post'),
-                  ),
-                );
-              }
-            },
-            child: Icon(Icons.add),
-          ),
-        ),
+        floatingActionButton: AddPostView(),
       ),
     );
   }
