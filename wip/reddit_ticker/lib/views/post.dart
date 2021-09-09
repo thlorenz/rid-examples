@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:plugin/generated/rid_api.dart';
 import 'package:reddit_ticker/blocs/cubit/post_cubit.dart';
+import 'package:reddit_ticker/blocs/cubit/post_launcher_cubit.dart';
 
 charts.Series<Score, double> toChartData(List<Score> scores) {
   return charts.Series<Score, double>(
@@ -28,15 +29,36 @@ class PostView extends StatelessWidget {
         return Dismissible(
           key: Key("Post Dismissible ${state.post.id}"),
           child: Card(
-            child: ListTile(
-              title: Center(
-                child: Text(post.title,
-                    style: Theme.of(context).textTheme.headline6!.copyWith(
-                          decoration: TextDecoration.underline,
-                          overflow: TextOverflow.ellipsis,
-                        )),
+            child: BlocListener<PostLauncherCubit, PostLauncherState>(
+              listener: (context, state) {
+                if (state is PostLauncherFailed) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      backgroundColor: Colors.red,
+                      content: Text(state.errMsg),
+                    ),
+                  );
+                }
+              },
+              child: InkWell(
+                child: ListTile(
+                  title: Center(
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: Text(
+                        post.title,
+                        style: Theme.of(context).textTheme.headline6!.copyWith(
+                              decoration: TextDecoration.underline,
+                              overflow: TextOverflow.ellipsis,
+                              color: Colors.blue,
+                            ),
+                      ),
+                    ),
+                  ),
+                  subtitle: SizedBox(height: 200, child: chart),
+                ),
+                onTap: () => context.read<PostLauncherCubit>().tryLaunch(),
               ),
-              subtitle: SizedBox(height: 200, child: chart),
             ),
           ),
           confirmDismiss: (_) =>
