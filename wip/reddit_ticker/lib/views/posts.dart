@@ -16,7 +16,7 @@ class PostsView extends StatelessWidget {
               final post = posts[index];
               return BlocProvider(
                 create: (_) => PostCubit(post),
-                child: Expanded(child: PostView()),
+                child: PostView(),
                 key: Key(post.hashCode.toString()),
               );
             });
