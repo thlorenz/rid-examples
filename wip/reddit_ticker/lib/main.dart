@@ -9,9 +9,6 @@ import 'package:reddit_ticker/views/add_post.dart';
 import 'package:reddit_ticker/views/posts.dart';
 
 final REQ_TIMEOUT = const Duration(seconds: 10);
-const URL =
-    'https://www.reddit.com/r/FlutterDev/comments/pk9uzs/magic_url_authentication_with_flutter_and_not/';
-
 void main(List<String> args) async {
   final store = Store.instance;
   await store.msgInitializeTicker();
@@ -23,9 +20,7 @@ class RedditTickerApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Reddit Ticker',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
+      theme: ThemeData(primarySwatch: Colors.indigo),
       home: MultiBlocProvider(
         providers: [
           BlocProvider<AddPostCubit>(create: (_) => AddPostCubit()),
@@ -73,6 +68,7 @@ class _RedditTickerPageState extends State<RedditTickerPage> {
           ),
         ),
         body: PostsView(),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
         floatingActionButton: AddPostView(),
       ),
     );

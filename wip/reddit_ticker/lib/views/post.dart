@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:plugin/generated/rid_api.dart';
 import 'package:reddit_ticker/blocs/cubit/post_cubit.dart';
-import 'package:intl/intl.dart';
 
 charts.Series<Score, double> toChartData(List<Score> scores) {
   return charts.Series<Score, double>(
@@ -15,10 +14,6 @@ charts.Series<Score, double> toChartData(List<Score> scores) {
   );
 }
 
-final simpleCurrencyFormatter =
-    new charts.BasicNumericTickFormatterSpec.fromNumberFormat(
-        NumberFormat.compact());
-
 class PostView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -29,12 +24,27 @@ class PostView extends StatelessWidget {
         final chart = charts.LineChart(
           [chartData],
           animate: true,
-          domainAxis: new charts.NumericAxisSpec(
-              tickFormatterSpec: simpleCurrencyFormatter),
         );
-        return ListTile(
-          title: Text(post.title),
-          subtitle: SizedBox(height: 200, child: chart),
+        return Dismissible(
+          key: Key("Post Dismissible ${state.post.id}"),
+          child: Card(
+            child: ListTile(
+              title: Center(
+                child: Text(post.title,
+                    style: Theme.of(context).textTheme.headline6!.copyWith(
+                          decoration: TextDecoration.underline,
+                          overflow: TextOverflow.ellipsis,
+                        )),
+              ),
+              subtitle: SizedBox(height: 200, child: chart),
+            ),
+          ),
+          confirmDismiss: (_) =>
+              context.read<PostCubit>().removePost().then((_) => true),
+          background: Padding(
+            padding: EdgeInsets.all(5.0),
+            child: Container(color: Colors.red),
+          ),
         );
       } else {
         return Card(child: Text('Post removed'));
@@ -42,23 +52,3 @@ class PostView extends StatelessWidget {
     });
   }
 }
-
-/*
-Dismissible(
-          key: Key("Post Dismissible ${state.post.id}"),
-          child: Card(
-            child: Column(
-              children: [
-                Text('${state.post.title}'),
-              ],
-            ),
-          ),
-          direction: DismissDirection.endToStart,
-          confirmDismiss: (_) =>
-              context.read<PostCubit>().removePost().then((_) => true),
-          background: Padding(
-            padding: EdgeInsets.all(5.0),
-            child: Container(color: Colors.red),
-          ),
-        )
-        */
