@@ -38,4 +38,12 @@
             android:name="flutterEmbedding"
             android:value="2" />
     </application>
+
+    <!-- Needed by URL launcher https://pub.dev/packages/url_launcher#android -->
+    <queries>
+      <intent>
+        <action android:name="android.intent.action.VIEW" />
+        <data android:scheme="https" />
+      </intent>
+    </queries>
 </manifest>
