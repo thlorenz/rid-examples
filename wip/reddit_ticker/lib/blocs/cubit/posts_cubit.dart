@@ -7,9 +7,14 @@ part 'posts_state.dart';
 
 class PostsCubit extends Cubit<PostsState> {
   final _store = Store.instance;
-  PostsCubit() : super(PostsState(Store.instance.posts.values.toList()));
+  PostsCubit() : super(PostsState([])) {
+    refresh();
+  }
 
   void refresh() {
-    emit(PostsState(_store.posts.values.toList()));
+    final posts = _store.posts.values.toList();
+    // Show posts added last on top
+    posts.sort((a, b) => a.scores.length.compareTo(b.scores.length));
+    emit(PostsState(posts));
   }
 }
