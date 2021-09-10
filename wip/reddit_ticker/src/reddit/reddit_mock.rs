@@ -9,17 +9,17 @@ fn mock_pages() -> Vec<Page> {
     vec![
         Page {
             id: String::from("reddit_page_1"),
-            title: String::from("Reddit Page1 Post"),
+            title: String::from("Why Rust and Flutter are made for each other"),
             url: String::from("https://1"),
         },
         Page {
             id: String::from("reddit_page_2"),
-            title: String::from("Reddit Page2 Post"),
+            title: String::from("Should I give rid a try?"),
             url: String::from("https://2"),
         },
         Page {
             id: String::from("reddit_page_3"),
-            title: String::from("Reddit Page3 Post"),
+            title: String::from("Starting into Rust for Flutter devs"),
             url: String::from("https://3"),
         },
     ]
