@@ -1,3 +1,4 @@
+mod db;
 mod reddit;
 
 use core::time;
@@ -8,6 +9,7 @@ use std::{
     time::SystemTime,
 };
 
+use db::DB;
 use reddit::{query_page, query_score, Score};
 
 use anyhow::{anyhow, Result};
@@ -23,6 +25,8 @@ pub struct Store {
     posts: HashMap<String, Post>,
     #[rid(skip)]
     polling: bool,
+    #[rid(skip)]
+    db: Option<DB>,
 }
 
 impl RidStore<Msg> for Store {
@@ -31,13 +35,29 @@ impl RidStore<Msg> for Store {
         Self {
             posts,
             polling: false,
+            db: None,
         }
     }
 
     fn update(&mut self, req_id: u64, msg: Msg) {
         match msg {
             Msg::StartWatching(url) => start_watching(req_id, url),
-            Msg::InitializeTicker => {
+            Msg::Initialize(app_dir) => {
+                if self.db.is_none() {
+                    let db_path = format!("{}/reddit_ticker.sqlite", app_dir);
+                    match DB::new(&db_path) {
+                        Ok(db) => {
+                            self.db = Some(db);
+                            rid::log_info!("Initialized Database at {}", db_path);
+                        }
+                        Err(err) => {
+                            rid::severe!(
+                                format!("Failed to open Database at {}", db_path),
+                                err.to_string()
+                            );
+                        }
+                    };
+                }
                 if !self.polling {
                     self.polling = true;
                     poll_posts();
@@ -123,11 +143,16 @@ fn poll_posts() {
 
         for (id, score) in scores {
             let mut store = Store::write();
+            if store.db.is_some() {
+                // store.db.as_mut().unwrap().insert_score(&id, score).unwrap();
+            }
+
             let post = store.posts.get_mut(&id).unwrap();
             let seconds_since_start = SystemTime::now()
                 .duration_since(post.added)
                 .expect("Getting duration")
                 .as_secs();
+
             let score = Score {
                 post_added_secs_ago: seconds_since_start,
                 score,
@@ -135,8 +160,7 @@ fn poll_posts() {
             post.scores.push(score);
         }
         rid::post(Reply::UpdatedScores);
-
-        thread::sleep(time::Duration::from_secs(10));
+        thread::sleep(time::Duration::from_secs(1));
     });
 }
 
@@ -145,7 +169,7 @@ fn poll_posts() {
 // -----------------
 #[rid::message(Reply)]
 pub enum Msg {
-    InitializeTicker,
+    Initialize(String),
 
     StartWatching(String),
     StopWatching(String),

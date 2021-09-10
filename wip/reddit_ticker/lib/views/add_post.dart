@@ -13,6 +13,7 @@ class _AddPostViewState extends State<AddPostView> {
   String? addPostURL;
   @override
   Widget build(BuildContext context) {
+    context.read<AddPostCubit>().addPost('https://1');
     return FloatingActionButton(
       onPressed: () async {
         _textFieldController.clear();

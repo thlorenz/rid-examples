@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'package:plugin/generated/rid_api.dart';
 
@@ -11,9 +12,12 @@ import 'package:reddit_ticker/views/posts.dart';
 
 final REQ_TIMEOUT = const Duration(seconds: 10);
 void main(List<String> args) async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final appDir = await getApplicationSupportDirectory();
+
   RidMessaging.init();
   final store = Store.instance;
-  await store.msgInitializeTicker();
+  await store.msgInitialize(appDir.path);
   runApp(RedditTickerApp());
 }
 

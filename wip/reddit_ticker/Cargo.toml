@@ -25,5 +25,9 @@ rid = { path = "../../../rid" }
 # Dev Dependencies
 rand = { version = "0.8.3", optional = true }
 
+[dependencies.rusqlite]
+version = "0.24.2"
+features = ["bundled"]
+
 [features]
 mock_reddit=["rand"]
