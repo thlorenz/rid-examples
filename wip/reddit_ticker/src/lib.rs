@@ -12,6 +12,14 @@ use reddit::{query_page, query_score, Score};
 
 use anyhow::{anyhow, Result};
 use rid::RidStore;
+
+macro_rules! log {
+    ($($arg:tt)*) => {{
+        let res = format!($($arg)*);
+        rid::post(Reply::Log(res));
+    }}
+}
+
 // -----------------
 // Store
 // -----------------
@@ -78,6 +86,8 @@ fn start_watching(req_id: u64, url: String) {
 fn try_start_watching(url: String) -> Result<Post> {
     let page =
         query_page(&url).map_err(|err| anyhow!("Failed to get page: {}\nError: {}", url, err))?;
+
+    log!("Got post page {}, starting watch.", url);
 
     let added = SystemTime::now();
     let post = Post {
@@ -157,6 +167,8 @@ pub enum Reply {
 
     FailedRequest(u64, String),
     UpdatedScores,
+
+    Log(String),
 }
 
 // -----------------

@@ -8,10 +8,17 @@ import 'package:reddit_ticker/blocs/cubit/posts_cubit.dart';
 import 'package:reddit_ticker/views/add_post.dart';
 import 'package:reddit_ticker/views/posts.dart';
 
+void logListener() {
+  replyChannel.stream.where((x) => x.type == Reply.Log).listen((reply) {
+    debugPrint('🦀: ${reply.data}');
+  });
+}
+
 final REQ_TIMEOUT = const Duration(seconds: 10);
 void main(List<String> args) async {
   final store = Store.instance;
   await store.msgInitializeTicker();
+  logListener();
   runApp(RedditTickerApp());
 }
 
