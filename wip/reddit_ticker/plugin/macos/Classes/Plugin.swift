@@ -11,6 +11,12 @@ public class Plugin: NSObject, FlutterPlugin {
 }
 // <rid:prevent_tree_shake Start>
 func dummyCallsToPreventTreeShaking() {
+    _to_dart_for_Score();
+    rid_score_debug(nil);
+    rid_score_debug_pretty(nil);
+    rid_score_post_added_secs_ago(nil);
+    rid_score_score(nil);
+    rid_cstring_free(nil);
     _to_dart_for_Store();
     create_store();
     rid_store_unlock();
@@ -25,7 +31,6 @@ func dummyCallsToPreventTreeShaking() {
     rid_free_ridvec_string(RidVec_Pointer_String());
     rid_get_item_ridvec_string(RidVec_Pointer_String(), 0);
     _include_Store_field_wrappers();
-    rid_cstring_free(nil);
     rid_msg_InitializeTicker(0);
     rid_msg_StartWatching(0, nil);
     rid_msg_StopWatching(0, nil);
@@ -42,10 +47,5 @@ func dummyCallsToPreventTreeShaking() {
     rid_post_scores(nil);
     rid_len_vec_score(nil);
     rid_get_item_vec_score(nil, 0);
-    _to_dart_for_Score();
-    rid_score_debug(nil);
-    rid_score_debug_pretty(nil);
-    rid_score_post_added_secs_ago(nil);
-    rid_score_score(nil);
 }
 // <rid:prevent_tree_shake End>

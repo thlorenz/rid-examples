@@ -1,9 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-pub type PageRoot = Vec<Page>;
+pub type PageRoot = Vec<RedditPage>;
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct Page {
+pub struct RedditPage {
     pub data: ChildContainer,
 }
 

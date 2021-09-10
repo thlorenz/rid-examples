@@ -1,5 +1,4 @@
-mod reddit_api_response;
-mod reddit_page_response;
+mod reddit;
 
 use core::time;
 use std::{
@@ -9,11 +8,10 @@ use std::{
     time::SystemTime,
 };
 
-use reddit_page_response::PageRoot;
-use rid::RidStore;
+use reddit::{query_page, query_score, Score};
 
-use crate::reddit_api_response::ApiRoot;
 use anyhow::{anyhow, Result};
+use rid::RidStore;
 // -----------------
 // Store
 // -----------------
@@ -168,70 +166,4 @@ pub struct Post {
     title: String,
     url: String,
     scores: Vec<Score>,
-}
-
-#[rid::model]
-#[derive(Debug)]
-pub struct Score {
-    post_added_secs_ago: u64,
-    score: i32,
-}
-
-const API_INFO_URL: &str = "https://api.reddit.com/api/info";
-
-fn query_score(id: &str) -> Result<i32, ureq::Error> {
-    let url = format!("{}?id={}", API_INFO_URL, id);
-    let api_response: ApiRoot = ureq::get(&url)
-        .set("User-Agent", "reddit-score")
-        .call()?
-        .into_json()?;
-    Ok(api_response.data.children[0].data.score)
-}
-
-// -----------------
-// Reddit Page
-// -----------------
-#[derive(Debug)]
-struct Page {
-    id: String,
-    title: String,
-    url: String,
-}
-
-fn query_page(url: &str) -> Result<Page> {
-    // Cut off query string
-    let url = match url.find('?') {
-        Some(idx) => &url[..idx],
-        None => url,
-    };
-    let url = format!("{}.json", url.trim_end_matches("/"));
-
-    let page_response: PageRoot = ureq::get(&url)
-        .set("User-Agent", "reddit-score")
-        .call()?
-        .into_json()?;
-
-    let data = &page_response
-        .first()
-        .expect("Expected at least on page in the page result")
-        .data
-        .children
-        .first()
-        .expect("Expected at least one child in the page")
-        .data;
-
-    let id = data.name.clone();
-    let title = data
-        .title
-        .as_ref()
-        .expect("Expected page to have a title")
-        .clone();
-
-    let url = data
-        .url
-        .as_ref()
-        .expect("Expected page to have a title")
-        .clone();
-
-    Ok(Page { id, title, url })
 }

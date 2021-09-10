@@ -21,3 +21,9 @@ anyhow = "1.0.38"
 
 rid_build = { path = "../../../rid/rid-build" }
 rid = { path = "../../../rid" }
+
+# Dev Dependencies
+rand = { version = "0.8.3", optional = true }
+
+[features]
+mock_reddit=["rand"]
