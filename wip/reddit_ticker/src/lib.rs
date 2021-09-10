@@ -19,19 +19,26 @@ use rid::RidStore;
 #[rid::structs(Post)]
 pub struct Store {
     posts: HashMap<String, Post>,
+    polling: bool,
 }
 
 impl RidStore<Msg> for Store {
     fn create() -> Self {
         let posts = HashMap::new();
-        Self { posts }
+        Self {
+            posts,
+            polling: false,
+        }
     }
 
     fn update(&mut self, req_id: u64, msg: Msg) {
         match msg {
             Msg::StartWatching(url) => start_watching(req_id, url),
             Msg::InitializeTicker => {
-                poll_posts();
+                if !self.polling {
+                    self.polling = true;
+                    poll_posts();
+                }
                 rid::post(Reply::InitializedTicker(req_id));
             }
             Msg::StopWatching(id) => {
