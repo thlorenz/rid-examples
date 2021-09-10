@@ -53,17 +53,20 @@ class _AddPostViewState extends State<AddPostView> {
                   hintText:
                       "https://www.reddit.com/r/rust/comments/ncc9vc/rid_integrate_rust_into_your_dart_or_flutter_app/"),
               autofocus: true,
+              onSubmitted: (_) => _onSubmitted(),
             ),
             actions: <Widget>[
               TextButton(
                 child: Text('Done'),
-                onPressed: () {
-                  addPostURL = _textFieldController.value.text;
-                  Navigator.pop(context);
-                },
+                onPressed: _onSubmitted,
               ),
             ],
           );
         });
+  }
+
+  void _onSubmitted() {
+    addPostURL = _textFieldController.value.text;
+    Navigator.pop(context);
   }
 }
