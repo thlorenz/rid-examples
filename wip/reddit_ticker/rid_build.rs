@@ -11,9 +11,9 @@ fn main() {
         .expect("Missing CARGO_PKG_NAME, please run this via 'cargo run'");
     let lib_name = &format!("lib{}", &crate_name);
 
-    let build_config = BuildConfig {
-        target: BuildTarget::Debug,
-        project: Project::Flutter(FlutterConfig {
+    let project = match &env::var("TEST_DART") {
+        Ok(_) => Project::Dart,
+        Err(_) => Project::Flutter(FlutterConfig {
             plugin_name: "plugin".to_string(),
             platforms: vec![
                 FlutterPlatform::ios(),
@@ -21,6 +21,11 @@ fn main() {
                 FlutterPlatform::android(),
             ],
         }),
+    };
+
+    let build_config = BuildConfig {
+        target: BuildTarget::Debug,
+        project,
         lib_name,
         crate_name,
         project_root: &crate_dir,
