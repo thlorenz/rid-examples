@@ -13,20 +13,15 @@ use reddit::{query_page, query_score, Score};
 use anyhow::{anyhow, Result};
 use rid::RidStore;
 
-macro_rules! log {
-    ($($arg:tt)*) => {{
-        let res = format!($($arg)*);
-        rid::post(Reply::Log(res));
-    }}
-}
-
 // -----------------
 // Store
 // -----------------
 #[rid::store]
 #[rid::structs(Post)]
+#[derive(rid::Config)]
 pub struct Store {
     posts: HashMap<String, Post>,
+    #[rid(skip)]
     polling: bool,
 }
 
@@ -87,7 +82,7 @@ fn try_start_watching(url: String) -> Result<Post> {
     let page =
         query_page(&url).map_err(|err| anyhow!("Failed to get page: {}\nError: {}", url, err))?;
 
-    log!("Got post page {}, starting watch.", url);
+    rid::log_debug!("Got page for url {} with id {}.", url, page.id);
 
     let added = SystemTime::now();
     let post = Post {
@@ -104,6 +99,7 @@ fn try_start_watching(url: String) -> Result<Post> {
 // Refresh watched Posts
 // -----------------
 fn poll_posts() {
+    rid::log_debug!("Creating thread to poll post data");
     thread::spawn(move || loop {
         // First we query all posts before and only take a write lock on the store
         // once we have all the data in order to limit the amount of time that the UI or other

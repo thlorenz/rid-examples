@@ -17,6 +17,8 @@ func dummyCallsToPreventTreeShaking() {
     rid_score_post_added_secs_ago(nil);
     rid_score_score(nil);
     rid_cstring_free(nil);
+    rid_init_msg_isolate(0);
+    rid_init_reply_isolate(0);
     _to_dart_for_Store();
     create_store();
     rid_store_unlock();

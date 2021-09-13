@@ -5,20 +5,15 @@ import 'package:plugin/generated/rid_api.dart';
 
 import 'package:reddit_ticker/blocs/cubit/add_post_cubit.dart';
 import 'package:reddit_ticker/blocs/cubit/posts_cubit.dart';
+import 'package:reddit_ticker/rid/messaging.dart';
 import 'package:reddit_ticker/views/add_post.dart';
 import 'package:reddit_ticker/views/posts.dart';
 
-void logListener() {
-  replyChannel.stream.where((x) => x.type == Reply.Log).listen((reply) {
-    debugPrint('🦀: ${reply.data}');
-  });
-}
-
 final REQ_TIMEOUT = const Duration(seconds: 10);
 void main(List<String> args) async {
+  RidMessaging.init();
   final store = Store.instance;
   await store.msgInitializeTicker();
-  logListener();
   runApp(RedditTickerApp());
 }
 
@@ -47,6 +42,12 @@ class RedditTickerPage extends StatefulWidget {
 }
 
 class _RedditTickerPageState extends State<RedditTickerPage> {
+  @override
+  void initState() {
+    super.initState();
+    ErrorHandler.instance.context = context;
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
