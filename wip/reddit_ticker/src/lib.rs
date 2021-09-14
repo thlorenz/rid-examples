@@ -90,7 +90,14 @@ fn start_watching(req_id: u64, url: String) {
         match try_start_watching(url) {
             Ok(post) => {
                 let id = post.id.clone();
-                Store::write().posts.insert(id.clone(), post);
+                let mut store = Store::write();
+                if let Some(db) = &store.db {
+                    if let Err(err) = db.insert_post(&post) {
+                        rid::error!("Failed to add post", err.to_string());
+                    }
+                }
+                store.posts.insert(id.clone(), post);
+
                 rid::post(Reply::StartedWatching(req_id, id))
             }
             Err(err) => rid::post(Reply::FailedRequest(req_id, err.to_string())),
@@ -142,22 +149,26 @@ fn poll_posts() {
             .collect();
 
         for (id, score) in scores {
+            let time_stamp = SystemTime::now();
             let mut store = Store::write();
-            if store.db.is_some() {
-                // store.db.as_mut().unwrap().insert_score(&id, score).unwrap();
+            {
+                let post = &mut store.posts.get_mut(&id).unwrap();
+                let seconds_since_start = time_stamp
+                    .duration_since(post.added)
+                    .expect("Getting duration")
+                    .as_secs();
+                let score = Score {
+                    post_added_secs_ago: seconds_since_start,
+                    score,
+                };
+                post.scores.push(score);
             }
 
-            let post = store.posts.get_mut(&id).unwrap();
-            let seconds_since_start = SystemTime::now()
-                .duration_since(post.added)
-                .expect("Getting duration")
-                .as_secs();
-
-            let score = Score {
-                post_added_secs_ago: seconds_since_start,
-                score,
-            };
-            post.scores.push(score);
+            if let Some(db) = &mut store.db.as_mut() {
+                if let Err(err) = db.insert_score(&id, time_stamp, score) {
+                    rid::error!("Failed to add score for post", err.to_string());
+                }
+            }
         }
         rid::post(Reply::UpdatedScores);
         thread::sleep(time::Duration::from_secs(1));

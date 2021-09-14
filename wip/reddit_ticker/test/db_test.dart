@@ -10,4 +10,6 @@ void main() async {
   final store = Store.instance;
   await store.msgInitialize(Directory.current.path);
   print('initialized');
+  final res = await store.msgStartWatching('https://2');
+  print('watch result: $res');
 }
