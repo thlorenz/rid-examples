@@ -1,7 +1,7 @@
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use anyhow::{anyhow, Result};
-use rusqlite::{params, Connection, OpenFlags};
+use rusqlite::{params, Connection, OpenFlags, OptionalExtension, NO_PARAMS};
 
 use crate::Post;
 
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS reddit_scores (
     added     INTEGER,
     score     INTEGER
 );
-CREATE INDEX idx_post_id ON reddit_scores (post_id);
+CREATE INDEX IF NOT EXISTS idx_post_id ON reddit_scores (post_id);
 COMMIT;
 ",
             )
@@ -73,8 +73,34 @@ COMMIT;
 
         Ok(res)
     }
+
+    pub fn get_post(&self, post_id: &str) -> Result<Option<Post>> {
+        let mut stmt = self.conn.prepare(
+            "
+SELECT post_id, title, url, added 
+FROM reddit_posts
+WHERE post_id = (?1);
+",
+        )?;
+        let res = stmt
+            .query_row(params!(post_id), |row| {
+                Ok(Post {
+                    id: row.get(0)?,
+                    title: row.get(1)?,
+                    url: row.get(2)?,
+                    added: normalized_secs_to_time_stamp(row.get(3)?),
+                    scores: vec![],
+                })
+            })
+            .optional()?;
+        Ok(res)
+    }
 }
 
 fn time_stamp_to_normalized_secs(time_stamp: SystemTime) -> u32 {
     (time_stamp.duration_since(UNIX_EPOCH).unwrap().as_secs() - TIME_BASE_SECS) as u32
+}
+
+fn normalized_secs_to_time_stamp(secs: u32) -> SystemTime {
+    UNIX_EPOCH + Duration::from_secs(TIME_BASE_SECS + secs as u64)
 }

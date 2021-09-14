@@ -91,13 +91,7 @@ fn start_watching(req_id: u64, url: String) {
             Ok(post) => {
                 let id = post.id.clone();
                 let mut store = Store::write();
-                if let Some(db) = &store.db {
-                    if let Err(err) = db.insert_post(&post) {
-                        rid::error!("Failed to add post", err.to_string());
-                    }
-                }
                 store.posts.insert(id.clone(), post);
-
                 rid::post(Reply::StartedWatching(req_id, id))
             }
             Err(err) => rid::post(Reply::FailedRequest(req_id, err.to_string())),
@@ -111,15 +105,42 @@ fn try_start_watching(url: String) -> Result<Post> {
 
     rid::log_debug!("Got page for url {} with id {}.", url, page.id);
 
-    let added = SystemTime::now();
-    let post = Post {
-        added,
-        id: page.id,
-        title: page.title,
-        url: page.url,
-        scores: vec![],
+    // Try to retrieve post from db
+    let post = if let Some(db) = Store::read().db.as_ref() {
+        db.get_post(&page.id)?
+    } else {
+        None
     };
-    Ok(post)
+
+    match post {
+        Some(post) => {
+            rid::log_debug!("Retrieved post with id {} from the Database", post.id);
+            Ok(post)
+        }
+        None => {
+            rid::log_debug!(
+                "Post with id {} not found in Database, creating it",
+                page.id
+            );
+            // If not in db we create a new one
+            let added = SystemTime::now();
+            let post = Post {
+                added,
+                id: page.id,
+                title: page.title,
+                url: page.url,
+                scores: vec![],
+            };
+            // And store it in the db
+            if let Some(db) = Store::read().db.as_ref() {
+                if let Err(err) = db.insert_post(&post) {
+                    rid::error!("Failed to insert post", err.to_string());
+                }
+            }
+
+            Ok(post)
+        }
+    }
 }
 
 // -----------------
