@@ -45,7 +45,7 @@ class _TodoViewState extends State<TodoView> with StateAsync<TodoView> {
     // Todos are expired on a separate thread in Rust tick by tick. Those tick
     // events aren't directly related to a user message and therefore we
     // subscribe to them.
-    expirySub = replyChannel.stream
+    expirySub = rid.replyChannel.stream
         .where(
             (reply) => reply.type == Reply.Tick && _replyIsForThisTodo(reply))
         .listen((_) {
