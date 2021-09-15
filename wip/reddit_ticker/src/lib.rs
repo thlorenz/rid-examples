@@ -107,7 +107,19 @@ fn try_start_watching(url: String) -> Result<Post> {
 
     // Try to retrieve post from db
     let post = if let Some(db) = Store::read().db.as_ref() {
-        db.get_post(&page.id)?
+        db.get_post(&page.id)?.map(|mut post| {
+            post.scores = match db.get_scores(&post) {
+                Ok(scores) => scores,
+                Err(err) => {
+                    rid::error!(
+                        format!("Found post {}, but was unable to load scores", post.id),
+                        err
+                    );
+                    Vec::new()
+                }
+            };
+            post
+        })
     } else {
         None
     };

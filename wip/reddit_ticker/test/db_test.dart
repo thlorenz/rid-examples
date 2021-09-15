@@ -12,4 +12,6 @@ void main() async {
   print('initialized');
   await store.msgStartWatching('https://1');
   await store.msgStartWatching('https://2');
+
+  print(store.posts.values.first);
 }
