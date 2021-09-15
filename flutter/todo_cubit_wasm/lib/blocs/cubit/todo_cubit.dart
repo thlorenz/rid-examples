@@ -28,7 +28,7 @@ class TodoCubit extends Cubit<TodoState> {
   }
 
   void _subscribe() {
-    tickSub = replyChannel.stream
+    tickSub = rid.replyChannel.stream
         .where((x) => x.type == Reply.Tick && _tickIsForThisTodo(x))
         .listen(_refreshState);
   }
