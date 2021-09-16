@@ -35,6 +35,9 @@ pub struct Score {
 mod reddit;
 #[cfg(not(feature = "mock_reddit"))]
 pub use reddit::*;
+#[cfg(not(feature = "mock_reddit"))]
+#[allow(dead_code)]
+pub const RESOLUTION_SECS: u64 = 10;
 
 // -----------------
 // Mock Reddit Access
@@ -43,3 +46,6 @@ pub use reddit::*;
 mod reddit_mock;
 #[cfg(feature = "mock_reddit")]
 pub use reddit_mock::*;
+#[cfg(feature = "mock_reddit")]
+#[allow(dead_code)]
+pub const RESOLUTION_SECS: u64 = 1;
