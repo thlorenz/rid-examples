@@ -217,7 +217,7 @@ fn poll_posts() {
         let scores: Vec<_> = post_ids
             .into_iter()
             .map(|id| {
-                let score = query_score(&id.as_str());
+                let score = query_score(&id);
                 (id, score)
             })
             // Ignore all cases where we couldn't update the score
@@ -236,6 +236,12 @@ fn poll_posts() {
             // this block) when we no longer need it
             let mut store = Store::write();
             for (id, score) in scores {
+                // A post could have been removed in between getting the post ids and aquiring
+                // the write lock.
+                if !store.posts.contains_key(&id) {
+                    continue;
+                }
+
                 let time_stamp = SystemTime::now();
                 {
                     let post = &mut store.posts.get_mut(&id).unwrap();
@@ -249,7 +255,6 @@ fn poll_posts() {
                         score,
                     });
                 }
-
                 if let Some(db) = &mut store.db.as_mut() {
                     if let Err(err) = db.insert_score(&id, time_stamp, score) {
                         rid::error!("Failed to add score for post", err.to_string());
