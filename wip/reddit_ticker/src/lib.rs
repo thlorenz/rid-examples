@@ -100,10 +100,10 @@ fn start_watching(req_id: u64, url: String) {
 }
 
 fn try_start_watching(url: String) -> Result<Post> {
-    let page =
-        query_page(&url).map_err(|err| anyhow!("Failed to get page: {}\nError: {}", url, err))?;
+    let page = query_page(&url)
+        .map_err(|err| anyhow!("Failed to get valid page data: {}\nError: {}", url, err))?;
 
-    rid::log_debug!("Got page for url {} with id {}.", url, page.id);
+    rid::log_debug!("Got page for url '{}' with id '{}'.", url, page.id);
 
     // Try to retrieve post from db
     let post = if let Some(db) = Store::read().db.as_ref() {
@@ -126,7 +126,7 @@ fn try_start_watching(url: String) -> Result<Post> {
 
     match post {
         Some(post) => {
-            rid::log_debug!("Retrieved post with id {} from the Database", post.id);
+            rid::log_debug!("Retrieved post with id '{}' from the Database", post.id);
             Ok(post)
         }
         None => {
@@ -191,7 +191,7 @@ fn poll_posts() {
                     .expect("Getting duration")
                     .as_secs();
                 let score = Score {
-                    post_added_secs_ago: seconds_since_start,
+                    secs_since_post_added: seconds_since_start,
                     score,
                 };
                 post.scores.push(score);

@@ -1,6 +1,6 @@
 use super::{ApiRoot, Page, PageRoot};
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 
 pub fn query_page(url: &str) -> Result<Page> {
     // Cut off query string
@@ -8,6 +8,7 @@ pub fn query_page(url: &str) -> Result<Page> {
         Some(idx) => &url[..idx],
         None => url,
     };
+    // Append `.json` to URL in order to get a data response
     let url = format!("{}.json", url.trim_end_matches("/"));
 
     let page_response: PageRoot = ureq::get(&url)
@@ -17,24 +18,24 @@ pub fn query_page(url: &str) -> Result<Page> {
 
     let data = &page_response
         .first()
-        .expect("Expected at least on page in the page result")
+        .ok_or_else(|| anyhow!("Page response did not contain any pages"))?
         .data
         .children
         .first()
-        .expect("Expected at least one child in the page")
+        .ok_or_else(|| anyhow!("Page response did not contain any childeren"))?
         .data;
 
     let id = data.name.clone();
     let title = data
         .title
         .as_ref()
-        .expect("Expected page to have a title")
+        .ok_or_else(|| anyhow!("Page was missing a valid title"))?
         .clone();
 
     let url = data
         .url
         .as_ref()
-        .expect("Expected page to have a title")
+        .ok_or_else(|| anyhow!("Page was missing a valid url"))?
         .clone();
 
     Ok(Page { id, title, url })
@@ -45,7 +46,7 @@ const API_INFO_URL: &str = "https://api.reddit.com/api/info";
 pub fn query_score(id: &str) -> Result<i32> {
     let url = format!("{}?id={}", API_INFO_URL, id);
     let api_response: ApiRoot = ureq::get(&url)
-        .set("User-Agent", "reddit-score")
+        .set("User-Agent", "reddit-ticker")
         .call()?
         .into_json()?;
     Ok(api_response.data.children[0].data.score)
