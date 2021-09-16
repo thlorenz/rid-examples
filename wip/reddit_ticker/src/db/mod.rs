@@ -5,10 +5,6 @@ use rusqlite::{params, Connection};
 
 use crate::{reddit::Score, Post};
 
-/// The time we use as the baseline for timestamps stored in our Database.
-/// It is expressed as seconds passed since the [UNIX_EPOCH].
-const TIME_BASE_SECS: u64 = 1631576216;
-
 pub struct DB {
     conn: Connection,
 }
@@ -160,17 +156,18 @@ WHERE post_id = (?1)
 // -----------------
 // Timestamp Utils
 // -----------------
-// We keep timestamps stored as secs passed since our `TIME_BASE_SECS` which is much closer than
-// the `UNIX_EPOCH` in order to be able to store them as u32 which is the largest `INTEGER`
-// supported by sqlite.
 
-/// Takes a [UNIX_EPOCH] based timestamp and returns the seconds passed since our [TIME_BASE_SECS].
+// We keep timestamps stored as secs since  `UNIX_EPOCH` in order to be able to store them as u32
+// which is the largest `INTEGER` supported by sqlite.
+
+/// Takes a [UNIX_EPOCH] based [SystemTime] timestamp and converts it to seconds.
 fn time_stamp_to_normalized_secs(time_stamp: SystemTime) -> u32 {
-    (time_stamp.duration_since(UNIX_EPOCH).unwrap().as_secs() - TIME_BASE_SECS) as u32
+    // max u32:          4,294,967,295
+    // UNIX_EPOCH secs: ~1,631,804,843
+    time_stamp.duration_since(UNIX_EPOCH).unwrap().as_secs() as u32
 }
 
-/// Takes the seconds passes since our [TIME_BASE_SECS] and returns the [SystemTime] based on
-/// [UNIX_EPOCH]
+/// Converts seconds passed since [UNIX_EPOCH] to a [SystemTime].
 fn normalized_secs_to_time_stamp(secs: u32) -> SystemTime {
-    UNIX_EPOCH + Duration::from_secs(TIME_BASE_SECS + secs as u64)
+    UNIX_EPOCH + Duration::from_secs(secs as u64)
 }
