@@ -1,7 +1,7 @@
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use anyhow::{anyhow, bail, Context, Result};
-use rusqlite::{params, Connection, OpenFlags, OptionalExtension, NO_PARAMS};
+use anyhow::{anyhow, bail, Result};
+use rusqlite::{params, Connection, OpenFlags};
 
 use crate::{reddit::Score, Post};
 

@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+#[cfg(not(feature = "mock_reddit"))]
 pub type PageRoot = Vec<RedditPage>;
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
