@@ -15,22 +15,22 @@ const ERR_PREFIX = '$RUST_ICON $ERR_ICON';
 const DETAILS_INDENT = '\n       ';
 
 class LogMessageHandler {
-  late final StreamSubscription<RidMsg>? _logMessagesSub;
+  late final StreamSubscription<RidMessage>? _logMessagesSub;
 
   LogMessageHandler._() {
-    _logMessagesSub = rid.messageChannel.stream.listen((RidMsg msg) {
+    _logMessagesSub = rid.messageChannel.stream.listen((RidMessage msg) {
       late final String prefix;
       switch (msg.type) {
-        case RidMsgType.Severe:
-        case RidMsgType.Error:
+        case RidMessageType.Severe:
+        case RidMessageType.Error:
           return;
-        case RidMsgType.LogWarn:
+        case RidMessageType.LogWarn:
           prefix = WARN_PREFIX;
           break;
-        case RidMsgType.LogInfo:
+        case RidMessageType.LogInfo:
           prefix = INFO_PREFIX;
           break;
-        case RidMsgType.LogDebug:
+        case RidMessageType.LogDebug:
           prefix = DEBG_PREFIX;
           break;
       }
@@ -54,21 +54,21 @@ class LogMessageHandler {
 }
 
 class ErrorHandler {
-  late final StreamSubscription<RidMsg>? _errorSub;
+  late final StreamSubscription<RidMessage>? _errorSub;
 
   ErrorHandler._() {
-    _errorSub = rid.messageChannel.stream.listen((RidMsg msg) {
+    _errorSub = rid.messageChannel.stream.listen((RidMessage msg) {
       switch (msg.type) {
-        case RidMsgType.LogWarn:
-        case RidMsgType.LogInfo:
-        case RidMsgType.LogDebug:
+        case RidMessageType.LogWarn:
+        case RidMessageType.LogInfo:
+        case RidMessageType.LogDebug:
           return;
-        case RidMsgType.Severe:
+        case RidMessageType.Severe:
           final indentedDetails = msg.details?.split('\n').join(DETAILS_INDENT);
           print('$ERR_PREFIX: ${msg.message}$DETAILS_INDENT$indentedDetails');
           break;
 
-        case RidMsgType.Error:
+        case RidMessageType.Error:
           final indentedDetails = msg.details?.split('\n').join('\n    ');
           print('$ERR_PREFIX: ${msg.message}\n       $indentedDetails');
           break;
