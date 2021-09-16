@@ -55,7 +55,7 @@ class PostView extends StatelessWidget {
                       ),
                     ),
                   ),
-                  subtitle: SizedBox(height: 200, child: chart),
+                  subtitle: SizedBox(height: 140, child: chart),
                 ),
                 onTap: () => context.read<PostLauncherCubit>().tryLaunch(),
               ),
