@@ -15,7 +15,7 @@ class PostCubit extends Cubit<PostState> {
 
   void _subscribe() {
     assert(scoreTickSub == null, 'Should only subscribe to post ticks once');
-    scoreTickSub = replyChannel.stream
+    scoreTickSub = rid.replyChannel.stream
         .where((x) => x.type == Reply.UpdatedScores)
         .listen(_refreshState);
   }
@@ -44,11 +44,11 @@ class PostCubit extends Cubit<PostState> {
     return super.close();
   }
 
-  Future<void> stopWatching() async {
+  Future<bool> stopWatching() async {
     assert(state is PostActive, 'Can only remove active post');
     final post = (state as PostActive).post;
     await _store.msgStopWatching(post.id).then(_refreshState);
-    // NOTE: changing state only, but no other entity is listening to it
     emit(PostRemoved(post.id, post.url));
+    return true;
   }
 }

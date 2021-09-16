@@ -4,6 +4,7 @@ import 'package:plugin/generated/rid_api.dart';
 
 part 'add_post_state.dart';
 
+// Requests to reddit can be slow especially on not so great internet
 final REQ_TIMEOUT = const Duration(seconds: 10);
 
 class AddPostCubit extends Cubit<AddPostState> {

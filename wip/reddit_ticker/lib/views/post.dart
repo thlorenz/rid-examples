@@ -9,7 +9,7 @@ charts.Series<Score, double> toChartData(List<Score> scores) {
   return charts.Series<Score, double>(
     id: 'Scores',
     colorFn: (_, __) => charts.MaterialPalette.blue.shadeDefault,
-    domainFn: (Score score, _) => score.postAddedSecsAgo / 60.0,
+    domainFn: (Score score, _) => score.secsSincePostAdded / 60.0,
     measureFn: (Score score, _) => score.score,
     data: scores,
   );
@@ -61,8 +61,7 @@ class PostView extends StatelessWidget {
               ),
             ),
           ),
-          confirmDismiss: (_) =>
-              context.read<PostCubit>().stopWatching().then((_) => true),
+          confirmDismiss: (_) => context.read<PostCubit>().stopWatching(),
           background: Padding(
             padding: EdgeInsets.all(5.0),
             child: Container(color: Colors.red),

@@ -14,7 +14,7 @@ func dummyCallsToPreventTreeShaking() {
     _to_dart_for_Score();
     rid_score_debug(nil);
     rid_score_debug_pretty(nil);
-    rid_score_post_added_secs_ago(nil);
+    rid_score_secs_since_post_added(nil);
     rid_score_score(nil);
     rid_cstring_free(nil);
     rid_init_msg_isolate(0);

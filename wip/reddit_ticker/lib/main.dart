@@ -10,14 +10,18 @@ import 'package:reddit_ticker/rid/messaging.dart';
 import 'package:reddit_ticker/views/add_post.dart';
 import 'package:reddit_ticker/views/posts.dart';
 
-final REQ_TIMEOUT = const Duration(seconds: 10);
 void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
-  final appDir = await getApplicationSupportDirectory();
 
+  // Register handlers for log messages as well as errors coming from Rust
   RidMessaging.init();
-  final store = Store.instance;
-  await store.msgInitialize(appDir.path);
+
+  rid.debugLock = null;
+
+  // Connect the Database and kick off the thread that is polling post scores
+  final appDir = await getApplicationSupportDirectory();
+  await Store.instance.msgInitialize(appDir.path);
+
   runApp(RedditTickerApp());
 }
 
@@ -39,8 +43,9 @@ class RedditTickerApp extends StatelessWidget {
 }
 
 class RedditTickerPage extends StatefulWidget {
-  RedditTickerPage({Key? key, required this.title}) : super(key: key);
   final String title;
+  RedditTickerPage({Key? key, required this.title}) : super(key: key);
+
   @override
   _RedditTickerPageState createState() => _RedditTickerPageState();
 }
@@ -49,6 +54,8 @@ class _RedditTickerPageState extends State<RedditTickerPage> {
   @override
   void initState() {
     super.initState();
+
+    // Provide our BuildContext to the Rust error handler so it can a snackbar and material banner
     ErrorHandler.instance.context = context;
   }
 

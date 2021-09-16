@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 part 'post_launcher_state.dart';
 
+/// Responsible for opening the URL of a reddit post in the browser.
 class PostLauncherCubit extends Cubit<PostLauncherState> {
   PostLauncherCubit(String url) : super(PostLauncherInitial(url));
 

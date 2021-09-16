@@ -13,16 +13,17 @@ class PostsCubit extends Cubit<PostsState> {
 
   PostsCubit() : super(PostsState([])) {
     _subscribe();
-    refresh();
+    _refresh();
   }
 
   void _subscribe() {
-    removedPostsSub = replyChannel.stream
-        .where((x) => x.type == Reply.StoppedWatching)
-        .listen((_) => refresh());
+    removedPostsSub = rid.replyChannel.stream
+        .where((x) =>
+            x.type == Reply.StartedWatching || x.type == Reply.StoppedWatching)
+        .listen((_) => _refresh());
   }
 
-  void refresh() {
+  void _refresh() {
     final posts = _store.posts.values.toList();
     // Show posts added last on top
     posts.sort((a, b) => a.scores.length.compareTo(b.scores.length));
