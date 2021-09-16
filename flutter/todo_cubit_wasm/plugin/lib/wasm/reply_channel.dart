@@ -29,13 +29,13 @@ class ReplyChannel<TReply extends IReply> {
   void _pollReplies() {
     _pollTimer = Timer.periodic(Duration(milliseconds: 100), (_) {
       // TODO: ugly hack to prevent printing polling logs for now
-      final save = RID_DEBUG_LOCK;
-      RID_DEBUG_LOCK = null;
+      final save = rid.debugLock;
+      rid.debugLock = null;
       // TODO: need to Readlock replies
       final ptr = _dl.rid_poll_reply();
       final castPtr = Pointer.fromAddress(RawReplyStruct(ptr.address));
       final reply = ptr.address == 0x0 ? null : castPtr.toDart();
-      RID_DEBUG_LOCK = save;
+      rid.debugLock = save;
       if (reply != null) {
         _onReceivedReply(reply);
         _dl.rid_handled_reply(reply.reqId);

@@ -27,6 +27,8 @@ func dummyCallsToPreventTreeShaking() {
     rid_get_item_vec_todo(nil, 0);
     _include_Store_field_wrappers();
     rid_cstring_free(nil);
+    rid_init_msg_isolate(0);
+    rid_init_reply_isolate(0);
     rid_export_Store_filtered_todos(nil);
     rid_export_Store_todo_by_id(nil, 0);
     __include_dart_for_ridvec_todo();

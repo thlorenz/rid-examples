@@ -16,7 +16,7 @@ class TodosCubit extends Cubit<TodosState> {
   }
 
   void _subscribe() {
-    removedTodosSub = replyChannel.stream
+    removedTodosSub = rid.replyChannel.stream
         .where((x) =>
             x.type == Reply.RemovedTodo ||
             x.type == Reply.RemovedCompleted ||

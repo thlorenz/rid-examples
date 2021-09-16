@@ -9,7 +9,7 @@ const Color FILTER_SELECTED_COLOR = Colors.blue;
 const Color FILTER_UNSELECTED_COLOR = Colors.black;
 
 void configRid() {
-  RID_DEBUG_REPLY = (reply) => debugPrint('$reply');
+  rid.debugReply = (reply) => debugPrint('$reply');
 }
 
 void main() async {
@@ -54,7 +54,7 @@ class _TodosPageState extends State<TodosPage> with StateAsync<TodosPage> {
     // direct response to a user message.
     // We subscribe to this event here to update the list of filtered todos
     // when that happens.
-    sub = replyChannel.stream
+    sub = rid.replyChannel.stream
         .where((reply) => reply.type == Reply.CompletedTodoExpired)
         .listen((_) {
       setState(() {});
