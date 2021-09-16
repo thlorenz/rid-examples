@@ -1,6 +1,6 @@
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use anyhow::{anyhow, bail, Result};
+use anyhow::{anyhow, Result};
 use rusqlite::{params, Connection, Row, NO_PARAMS};
 
 use crate::{reddit::Score, Post};
@@ -124,24 +124,6 @@ WHERE post_id = (?1);
     // -----------------
     // Retrieving Posts and Scores
     // -----------------
-    pub fn get_post(&self, post_id: &str) -> Result<Option<Post>> {
-        let mut stmt = self.conn.prepare(
-            "
-SELECT post_id, title, url, added 
-FROM reddit_posts
-WHERE post_id = (?1);
-",
-        )?;
-        let mut results = stmt.query_map(params!(post_id), try_extract_post)?;
-        match results.next() {
-            Some(res) => match res {
-                Ok(post) => Ok(Some(post)),
-                Err(err) => bail!(err),
-            },
-            None => Ok(None),
-        }
-    }
-
     pub fn get_scores(&self, post: &Post) -> Result<Vec<Score>> {
         let mut stmt = self.conn.prepare(
             "
@@ -152,23 +134,7 @@ WHERE post_id = (?1)
         )?;
 
         let results: Vec<_> = stmt
-            .query_map(params!(post.id), |row| {
-                // Score timestamps are stored relative to our base time, however the rest
-                // of the app treats score timestamps based on the time the post was added.
-                let secs: u32 = row.get(0)?;
-                let time_stamp = secs_to_time_stamp(secs);
-                let secs_since_post_added = time_stamp
-                    .duration_since(post.added)
-                    .expect("Invalid timestamp")
-                    .as_secs();
-
-                let score: i32 = row.get(1)?;
-
-                Ok(Score {
-                    secs_since_post_added,
-                    score,
-                })
-            })?
+            .query_map(params!(post.id), |row| try_extract_score(row, post.added))?
             .filter_map(|x| match x {
                 Ok(score) => Some(score),
                 Err(err) => {
@@ -209,6 +175,24 @@ FROM reddit_posts;
 // -----------------
 // Sqlite helpers
 // -----------------
+fn try_extract_score(row: &Row, post_added: SystemTime) -> rusqlite::Result<Score> {
+    // Score timestamps are stored [UNIX_EPOCH] seconds, however the rest
+    // of the app treats score timestamps based on the time the post was added.
+    let secs: u32 = row.get(0)?;
+    let time_stamp = secs_to_time_stamp(secs);
+    let secs_since_post_added = time_stamp
+        .duration_since(post_added)
+        .expect("Invalid timestamp")
+        .as_secs();
+
+    let score: i32 = row.get(1)?;
+
+    Ok(Score {
+        secs_since_post_added,
+        score,
+    })
+}
+
 fn try_extract_post(row: &Row) -> rusqlite::Result<Post> {
     Ok(Post {
         id: row.get(0)?,

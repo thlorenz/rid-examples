@@ -184,53 +184,22 @@ fn try_start_watching(url: String) -> Result<Post> {
 
     rid::log_debug!("Got page for url '{}' with id '{}'.", url, page.id);
 
-    // Try to retrieve post and its scores from Database
-    let post = if let Some(db) = Store::read().db.as_ref() {
-        db.get_post(&page.id)?.map(|mut post| {
-            post.scores = match db.get_scores(&post) {
-                Ok(scores) => scores,
-                Err(err) => {
-                    // If we the post existed but we couldn't get the scores we alert the Flutter end about that issue
-                    rid::error!(
-                        format!("Found post '{}', but was unable to load scores", post.id),
-                        err
-                    );
-                    Vec::new()
-                }
-            };
-            post
-        })
-    } else {
-        None
+    let added = SystemTime::now();
+    let post = Post {
+        added,
+        id: page.id,
+        title: page.title,
+        url: page.url,
+        scores: vec![],
     };
 
-    match post {
-        Some(post) => {
-            rid::log_debug!("Retrieved post with id '{}' from the Database", post.id);
-            Ok(post)
-        }
-        None => {
-            rid::log_debug!(
-                "Post with id {} was not found in Database, creating it",
-                page.id
-            );
-            let added = SystemTime::now();
-            let post = Post {
-                added,
-                id: page.id,
-                title: page.title,
-                url: page.url,
-                scores: vec![],
-            };
-            // Store the new post in the Database
-            if let Some(db) = Store::read().db.as_ref() {
-                if let Err(err) = db.insert_post(&post) {
-                    rid::error!("Failed to insert post", err.to_string());
-                }
-            }
-            Ok(post)
+    // Store the new post in the Database
+    if let Some(db) = Store::read().db.as_ref() {
+        if let Err(err) = db.insert_post(&post) {
+            rid::error!("Failed to insert post", err.to_string());
         }
     }
+    Ok(post)
 }
 
 // -----------------
