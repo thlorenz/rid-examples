@@ -4,6 +4,7 @@ mod reddit;
 use core::time;
 use std::{
     collections::HashMap,
+    path::Path,
     sync::{RwLockReadGuard, RwLockWriteGuard},
     thread,
     time::SystemTime,
@@ -44,15 +45,18 @@ impl RidStore<Msg> for Store {
             Msg::StartWatching(url) => start_watching(req_id, url),
             Msg::Initialize(app_dir) => {
                 if self.db.is_none() {
-                    let db_path = format!("{}/reddit_ticker.sqlite", app_dir);
+                    let db_path = Path::new(&app_dir)
+                        .join("reddit_ticker.sqlite")
+                        .to_string_lossy()
+                        .to_string();
                     match DB::new(&db_path) {
                         Ok(db) => {
                             self.db = Some(db);
-                            rid::log_info!("Initialized Database at {}", db_path);
+                            rid::log_info!("Initialized Database at '{}'", db_path);
                         }
                         Err(err) => {
                             rid::severe!(
-                                format!("Failed to open Database at {}", db_path),
+                                format!("Failed to open Database at '{}'", db_path),
                                 err.to_string()
                             );
                         }
@@ -62,7 +66,7 @@ impl RidStore<Msg> for Store {
                     self.polling = true;
                     poll_posts();
                 }
-                rid::post(Reply::InitializedTicker(req_id));
+                rid::post(Reply::Initialized(req_id));
             }
             Msg::StopWatching(id) => {
                 self.posts.remove(&id);
@@ -83,132 +87,6 @@ impl Store {
 }
 
 // -----------------
-// Start watching Post
-// -----------------
-fn start_watching(req_id: u64, url: String) {
-    thread::spawn(move || {
-        match try_start_watching(url) {
-            Ok(post) => {
-                let id = post.id.clone();
-                let mut store = Store::write();
-                store.posts.insert(id.clone(), post);
-                rid::post(Reply::StartedWatching(req_id, id))
-            }
-            Err(err) => rid::post(Reply::FailedRequest(req_id, err.to_string())),
-        };
-    });
-}
-
-fn try_start_watching(url: String) -> Result<Post> {
-    let page = query_page(&url)
-        .map_err(|err| anyhow!("Failed to get valid page data: {}\nError: {}", url, err))?;
-
-    rid::log_debug!("Got page for url '{}' with id '{}'.", url, page.id);
-
-    // Try to retrieve post from db
-    let post = if let Some(db) = Store::read().db.as_ref() {
-        db.get_post(&page.id)?.map(|mut post| {
-            post.scores = match db.get_scores(&post) {
-                Ok(scores) => scores,
-                Err(err) => {
-                    rid::error!(
-                        format!("Found post {}, but was unable to load scores", post.id),
-                        err
-                    );
-                    Vec::new()
-                }
-            };
-            post
-        })
-    } else {
-        None
-    };
-
-    match post {
-        Some(post) => {
-            rid::log_debug!("Retrieved post with id '{}' from the Database", post.id);
-            Ok(post)
-        }
-        None => {
-            rid::log_debug!(
-                "Post with id {} not found in Database, creating it",
-                page.id
-            );
-            // If not in db we create a new one
-            let added = SystemTime::now();
-            let post = Post {
-                added,
-                id: page.id,
-                title: page.title,
-                url: page.url,
-                scores: vec![],
-            };
-            // And store it in the db
-            if let Some(db) = Store::read().db.as_ref() {
-                if let Err(err) = db.insert_post(&post) {
-                    rid::error!("Failed to insert post", err.to_string());
-                }
-            }
-
-            Ok(post)
-        }
-    }
-}
-
-// -----------------
-// Refresh watched Posts
-// -----------------
-fn poll_posts() {
-    rid::log_debug!("Creating thread to poll post data");
-    thread::spawn(move || loop {
-        // First we query all posts before and only take a write lock on the store
-        // once we have all the data in order to limit the amount of time that the UI or other
-        // threads cannot access the store.
-        // In order to release the read lock on the store as soon as possible we clone the post
-        // ids.
-        let post_ids: Vec<_> = { Store::read().posts.keys().cloned().collect() };
-        let scores: Vec<_> = post_ids
-            .into_iter()
-            .map(|id| {
-                let score = query_score(&id.as_str());
-                (id, score)
-            })
-            // Ignore all cases where we couldn't update the score
-            // In the future we may emit a failure event here to show this problem in the Dart UI
-            .filter_map(|(id, score_res)| match score_res {
-                Ok(score) => Some((id, score)),
-                Err(_) => None,
-            })
-            .collect();
-
-        for (id, score) in scores {
-            let time_stamp = SystemTime::now();
-            let mut store = Store::write();
-            {
-                let post = &mut store.posts.get_mut(&id).unwrap();
-                let seconds_since_start = time_stamp
-                    .duration_since(post.added)
-                    .expect("Getting duration")
-                    .as_secs();
-                let score = Score {
-                    secs_since_post_added: seconds_since_start,
-                    score,
-                };
-                post.scores.push(score);
-            }
-
-            if let Some(db) = &mut store.db.as_mut() {
-                if let Err(err) = db.insert_score(&id, time_stamp, score) {
-                    rid::error!("Failed to add score for post", err.to_string());
-                }
-            }
-        }
-        rid::post(Reply::UpdatedScores);
-        thread::sleep(time::Duration::from_secs(1));
-    });
-}
-
-// -----------------
 // Message
 // -----------------
 #[rid::message(Reply)]
@@ -224,7 +102,7 @@ pub enum Msg {
 // -----------------
 #[rid::reply]
 pub enum Reply {
-    InitializedTicker(u64),
+    Initialized(u64),
 
     StartedWatching(u64, String),
     StoppedWatching(u64, String),
@@ -249,4 +127,140 @@ pub struct Post {
     title: String,
     url: String,
     scores: Vec<Score>,
+}
+
+// ------------------------------------------------------------------------------------------
+// ---------------               Application Functionality                -------------------
+// ------------------------------------------------------------------------------------------
+
+// -----------------
+// Start watching Post
+// -----------------
+fn start_watching(req_id: u64, url: String) {
+    thread::spawn(move || {
+        match try_start_watching(url) {
+            Ok(post) => {
+                let id = post.id.clone();
+                let mut store = Store::write();
+                store.posts.insert(id.clone(), post);
+                rid::post(Reply::StartedWatching(req_id, id))
+            }
+            Err(err) => rid::post(Reply::FailedRequest(req_id, err.to_string())),
+        };
+    });
+}
+
+fn try_start_watching(url: String) -> Result<Post> {
+    let page = query_page(&url)
+        .map_err(|err| anyhow!("Failed to get valid page data: {}\nError: {}", url, err))?;
+
+    rid::log_debug!("Got page for url '{}' with id '{}'.", url, page.id);
+
+    // Try to retrieve post and its scores from Database
+    let post = if let Some(db) = Store::read().db.as_ref() {
+        db.get_post(&page.id)?.map(|mut post| {
+            post.scores = match db.get_scores(&post) {
+                Ok(scores) => scores,
+                Err(err) => {
+                    // If we the post existed but we couldn't get the scores we alert the Flutter end about that issue
+                    rid::error!(
+                        format!("Found post '{}', but was unable to load scores", post.id),
+                        err
+                    );
+                    Vec::new()
+                }
+            };
+            post
+        })
+    } else {
+        None
+    };
+
+    match post {
+        Some(post) => {
+            rid::log_debug!("Retrieved post with id '{}' from the Database", post.id);
+            Ok(post)
+        }
+        None => {
+            rid::log_debug!(
+                "Post with id {} was not found in Database, creating it",
+                page.id
+            );
+            let added = SystemTime::now();
+            let post = Post {
+                added,
+                id: page.id,
+                title: page.title,
+                url: page.url,
+                scores: vec![],
+            };
+            // Store the new post in the Database
+            if let Some(db) = Store::read().db.as_ref() {
+                if let Err(err) = db.insert_post(&post) {
+                    rid::error!("Failed to insert post", err.to_string());
+                }
+            }
+            Ok(post)
+        }
+    }
+}
+
+// -----------------
+// Refresh watched Posts
+// -----------------
+fn poll_posts() {
+    rid::log_debug!("Creating thread to poll post data");
+    thread::spawn(move || loop {
+        // First we query all posts and only take a write lock on the store once we have all the
+        // data in order to limit the amount of time that the UI or other threads cannot access the
+        // store.
+
+        // In order to release the read lock on the store immediately, we clone the post ids.
+        let post_ids: Vec<_> = { Store::read().posts.keys().cloned().collect() };
+        let scores: Vec<_> = post_ids
+            .into_iter()
+            .map(|id| {
+                let score = query_score(&id.as_str());
+                (id, score)
+            })
+            // Ignore all cases where we couldn't update the score
+            // In the future we may emit a failure event here to show this problem in the Dart UI
+            .filter_map(|(id, score_res)| match score_res {
+                Ok(score) => Some((id, score)),
+                Err(err) => {
+                    rid::error!("Failed to update score for a post", err.to_string());
+                    None
+                }
+            })
+            .collect();
+
+        {
+            // Aquire a write lock to the store once and make sure it gets dropped (at the end of
+            // this block) when we no longer need it
+            let mut store = Store::write();
+            for (id, score) in scores {
+                let time_stamp = SystemTime::now();
+                {
+                    let post = &mut store.posts.get_mut(&id).unwrap();
+                    let secs_since_post_added = time_stamp
+                        .duration_since(post.added)
+                        .expect("Getting duration")
+                        .as_secs();
+
+                    post.scores.push(Score {
+                        secs_since_post_added,
+                        score,
+                    });
+                }
+
+                if let Some(db) = &mut store.db.as_mut() {
+                    if let Err(err) = db.insert_score(&id, time_stamp, score) {
+                        rid::error!("Failed to add score for post", err.to_string());
+                    }
+                }
+            }
+        }
+        rid::post(Reply::UpdatedScores);
+        thread::sleep(time::Duration::from_secs(1));
+    });
 }
