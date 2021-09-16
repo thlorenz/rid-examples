@@ -94,6 +94,34 @@ VALUES (?1, ?2, ?3);
     }
 
     // -----------------
+    // Deleting Posts and Scores
+    // -----------------
+    pub fn delete_post(&self, post_id: &str) -> Result<usize> {
+        let post_rows_removed = self
+            .conn
+            .execute(
+                "
+DELETE FROM reddit_posts 
+WHERE post_id = (?1);
+",
+                params!(post_id),
+            )
+            .map_err(|err| anyhow!("Failed to remove post from table:\nError: {}", err))?;
+
+        let score_rows_removed = self
+            .conn
+            .execute(
+                "
+DELETE FROM reddit_scores 
+WHERE post_id = (?1);
+",
+                params!(post_id),
+            )
+            .map_err(|err| anyhow!("Failed to remove scores from table:\nError: {}", err))?;
+        Ok(post_rows_removed + score_rows_removed)
+    }
+
+    // -----------------
     // Retrieving Posts and Scores
     // -----------------
     pub fn get_post(&self, post_id: &str) -> Result<Option<Post>> {
