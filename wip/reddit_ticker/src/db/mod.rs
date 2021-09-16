@@ -1,10 +1,12 @@
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use anyhow::{anyhow, bail, Result};
-use rusqlite::{params, Connection, OpenFlags};
+use rusqlite::{params, Connection};
 
 use crate::{reddit::Score, Post};
 
+/// The time we use as the baseline for timestamps stored in our Database.
+/// It is expressed as seconds passed since the [UNIX_EPOCH].
 const TIME_BASE_SECS: u64 = 1631576216;
 
 pub struct DB {
@@ -12,10 +14,12 @@ pub struct DB {
 }
 
 impl DB {
+    // -----------------
+    // Initializing Database
+    // -----------------
     pub fn new(path: &str) -> Result<Self> {
-        let flags = OpenFlags::SQLITE_OPEN_READ_WRITE | OpenFlags::SQLITE_OPEN_CREATE;
-        let conn = Connection::open_with_flags(path, flags)
-            .map_err(|err| anyhow!("Failed to open DataBase at: {}\nError: {}", path, err))?;
+        let conn = Connection::open(path)
+            .map_err(|err| anyhow!("Failed to open Database at: {}\nError: {}", path, err))?;
 
         let db = Self { conn };
         db.init_tables()?;
@@ -43,9 +47,12 @@ CREATE INDEX IF NOT EXISTS idx_post_id ON reddit_scores (post_id);
 COMMIT;
 ",
             )
-            .map_err(|err| anyhow!("Failed to create DataBase tables:\nError: {}", err))
+            .map_err(|err| anyhow!("Failed to create Database tables:\nError: {}", err))
     }
 
+    // -----------------
+    // Inserting Posts and Scores
+    // -----------------
     pub fn insert_post(&self, post: &Post) -> Result<usize> {
         let added: u32 = time_stamp_to_normalized_secs(post.added);
 
@@ -82,6 +89,9 @@ VALUES (?1, ?2, ?3);
         Ok(res)
     }
 
+    // -----------------
+    // Retrieving Posts and Scores
+    // -----------------
     pub fn get_post(&self, post_id: &str) -> Result<Option<Post>> {
         let mut stmt = self.conn.prepare(
             "
@@ -119,20 +129,21 @@ WHERE post_id = (?1)
 
         let results: Vec<_> = stmt
             .query_map(params!(post.id), |row| {
+                // Score timestamps are stored relative to our base time, however the rest
+                // of the app treats score timestamps based on the time the post was added.
                 let secs: u32 = row.get(0)?;
                 let time_stamp = normalized_secs_to_time_stamp(secs);
-                let post_added_secs_ago = time_stamp
+                let secs_since_post_added = time_stamp
                     .duration_since(post.added)
                     .expect("Invalid timestamp")
                     .as_secs();
 
                 let score: i32 = row.get(1)?;
 
-                let score = Score {
-                    post_added_secs_ago,
+                Ok(Score {
+                    secs_since_post_added,
                     score,
-                };
-                Ok(score)
+                })
             })?
             .filter_map(|x| match x {
                 Ok(score) => Some(score),
@@ -146,10 +157,20 @@ WHERE post_id = (?1)
     }
 }
 
+// -----------------
+// Timestamp Utils
+// -----------------
+// We keep timestamps stored as secs passed since our `TIME_BASE_SECS` which is much closer than
+// the `UNIX_EPOCH` in order to be able to store them as u32 which is the largest `INTEGER`
+// supported by sqlite.
+
+/// Takes a [UNIX_EPOCH] based timestamp and returns the seconds passed since our [TIME_BASE_SECS].
 fn time_stamp_to_normalized_secs(time_stamp: SystemTime) -> u32 {
     (time_stamp.duration_since(UNIX_EPOCH).unwrap().as_secs() - TIME_BASE_SECS) as u32
 }
 
+/// Takes the seconds passes since our [TIME_BASE_SECS] and returns the [SystemTime] based on
+/// [UNIX_EPOCH]
 fn normalized_secs_to_time_stamp(secs: u32) -> SystemTime {
     UNIX_EPOCH + Duration::from_secs(TIME_BASE_SECS + secs as u64)
 }
