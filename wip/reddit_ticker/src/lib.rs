@@ -10,7 +10,7 @@ use std::{
     time::SystemTime,
 };
 
-use db::DB;
+use db::{DB, DB_NAME};
 use reddit::{query_page, query_score, Score};
 
 use anyhow::{anyhow, Result};
@@ -46,7 +46,7 @@ impl RidStore<Msg> for Store {
             Msg::Initialize(app_dir) => {
                 if self.db.is_none() {
                     let db_path = Path::new(&app_dir)
-                        .join("reddit_ticker.sqlite")
+                        .join(DB_NAME)
                         .to_string_lossy()
                         .to_string();
                     match DB::new(&db_path) {
@@ -66,6 +66,26 @@ impl RidStore<Msg> for Store {
                     self.polling = true;
                     poll_posts();
                 }
+                if let Some(db) = &self.db {
+                    self.posts = match db.get_all_posts() {
+                        Ok(posts) => {
+                            let mut map = HashMap::<String, Post>::new();
+                            for post in posts {
+                                map.insert(post.id.clone(), post);
+                            }
+                            map
+                        }
+                        Err(err) => {
+                            rid::error!("Failed to retrieve existing posts", err);
+                            HashMap::new()
+                        }
+                    };
+                    rid::log_info!(
+                        "Loaded {} existing post(s) from the Database",
+                        self.posts.len()
+                    );
+                }
+
                 rid::post(Reply::Initialized(req_id));
             }
             Msg::StopWatching(id) => {
