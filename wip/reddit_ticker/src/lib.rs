@@ -16,6 +16,8 @@ use reddit::{query_page, query_score, Score};
 use anyhow::{anyhow, Result};
 use rid::RidStore;
 
+use crate::reddit::RESOLUTION_MILLIS;
+
 // -----------------
 // Store
 // -----------------
@@ -263,6 +265,6 @@ fn poll_posts() {
             }
         }
         rid::post(Reply::UpdatedScores);
-        thread::sleep(time::Duration::from_secs(1));
+        thread::sleep(time::Duration::from_millis(RESOLUTION_MILLIS));
     });
 }

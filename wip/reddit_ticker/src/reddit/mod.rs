@@ -37,7 +37,7 @@ mod reddit;
 pub use reddit::*;
 #[cfg(not(feature = "mock_reddit"))]
 #[allow(dead_code)]
-pub const RESOLUTION_SECS: u64 = 10;
+pub const RESOLUTION_MILLIS: u64 = 10_000;
 
 // -----------------
 // Mock Reddit Access
@@ -48,4 +48,4 @@ mod reddit_mock;
 pub use reddit_mock::*;
 #[cfg(feature = "mock_reddit")]
 #[allow(dead_code)]
-pub const RESOLUTION_SECS: u64 = 1;
+pub const RESOLUTION_MILLIS: u64 = 1_000;
