@@ -19,6 +19,11 @@ dependencies:
   bloc: ^7.1.0
   flutter_bloc: ^7.2.0
 
+  # Published version isn't Flutter 2.5 compat
+  # See https://github.com/google/charts/issues/678
+  charts_flutter:
+    path: ./deps/charts/charts_flutter
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
