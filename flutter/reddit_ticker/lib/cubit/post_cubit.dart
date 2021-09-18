@@ -28,7 +28,8 @@ class PostCubit extends Cubit<PostState> {
   Future<void> _refreshState() async {
     assert(state is PostActive, 'Should only refresh post when it is ticking');
     final postActive = state as PostActive;
-    final post = _store.posts[postActive.postId];
+    final post =
+        _store.raw.runLocked((raw) => raw.posts.get(postActive.postId));
 
     if (post == null) {
       emit(postActive.intoRemoved());
