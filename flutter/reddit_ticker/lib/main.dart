@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:reddit_ticker/cubit/posts_cubit.dart';
 import 'package:plugin/generated/rid_api.dart';
 import 'package:reddit_ticker/rid/messaging.dart';
+import 'package:reddit_ticker/views/posts.dart';
 
 void main() {
   // Register handlers for log messages as well as errors coming from Rust
@@ -18,7 +21,12 @@ class RedditTickerApp extends StatelessWidget {
     return MaterialApp(
       title: 'Reddit Ticker',
       theme: ThemeData(primarySwatch: Colors.indigo),
-      home: RedditTickerPage(title: 'Reddit Ticker'),
+      home: MultiBlocProvider(
+        providers: [
+          BlocProvider<PostsCubit>(create: (_) => PostsCubit()),
+        ],
+        child: RedditTickerPage(title: 'Reddit Ticker'),
+      ),
     );
   }
 }
@@ -67,7 +75,7 @@ class _RedditTickerPageState extends State<RedditTickerPage> {
             ],
           ),
         ),
-        body: Text('TODO: PostsView'),
+        body: PostsView(),
       ),
     );
   }
