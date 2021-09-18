@@ -148,6 +148,13 @@ fn try_start_watching(url: String) -> Result<Post> {
         url: page.url,
         scores: vec![],
     };
+
+    // Store the new post in the Database
+    if let Some(db) = Store::read().db.as_ref() {
+        if let Err(err) = db.insert_post(&post) {
+            rid::error!("Failed to insert post", err.to_string());
+        }
+    }
     Ok(post)
 }
 

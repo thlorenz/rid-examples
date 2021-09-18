@@ -1,5 +1,9 @@
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
+
 use anyhow::{anyhow, Result};
-use rusqlite::Connection;
+use rusqlite::{params, Connection};
+
+use crate::reddit::Post;
 
 pub const DB_NAME: &str = "reddit_ticker.sqlite";
 
@@ -43,4 +47,40 @@ COMMIT;
             )
             .map_err(|err| anyhow!("Failed to create Database tables:\nError: {}", err))
     }
+
+    // -----------------
+    // Inserting Posts and Scores
+    // -----------------
+    pub fn insert_post(&self, post: &Post) -> Result<usize> {
+        let added: u32 = time_stamp_to_secs(post.added);
+
+        self.conn
+            .execute(
+                "
+INSERT OR IGNORE INTO reddit_posts (post_id, title, url, added)
+VALUES (?1, ?2, ?3, ?4);
+",
+                params!(post.id, post.title, post.url, added),
+            )
+            .map_err(|err| anyhow!("Failed to add post with id {}:\nError: {}", post.id, err))
+    }
+}
+
+// -----------------
+// Timestamp Utils
+// -----------------
+
+// We keep timestamps stored as secs since  `UNIX_EPOCH` in order to be able to store them as u32
+// which is the largest `INTEGER` supported by sqlite.
+
+/// Takes a [UNIX_EPOCH] based [SystemTime] timestamp and converts it to seconds.
+fn time_stamp_to_secs(time_stamp: SystemTime) -> u32 {
+    // max u32:          4,294,967,295
+    // UNIX_EPOCH secs: ~1,631,804,843
+    time_stamp.duration_since(UNIX_EPOCH).unwrap().as_secs() as u32
+}
+
+/// Converts seconds passed since [UNIX_EPOCH] to a [SystemTime].
+fn secs_to_time_stamp(secs: u32) -> SystemTime {
+    UNIX_EPOCH + Duration::from_secs(secs as u64)
 }
