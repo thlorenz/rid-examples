@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'package:plugin/generated/rid_api.dart';
 
@@ -16,7 +17,11 @@ void main() async {
   // Don't clutter console with Store lock messages
   rid.debugLock = null;
 
-  await Store.instance.msgInitialize();
+  // Connect the Database and kick off the thread that is polling post scores
+  WidgetsFlutterBinding.ensureInitialized();
+  final appDir = await getApplicationSupportDirectory();
+  await Store.instance.msgInitialize(appDir.path);
+
   runApp(RedditTickerApp());
 }
 

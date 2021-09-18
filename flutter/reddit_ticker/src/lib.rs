@@ -1,7 +1,9 @@
 use anyhow::{anyhow, Result};
 use core::time;
+use db::{DB, DB_NAME};
 use std::{
     collections::HashMap,
+    path::Path,
     sync::{RwLockReadGuard, RwLockWriteGuard},
     thread,
     time::SystemTime,
@@ -12,6 +14,7 @@ use rid::RidStore;
 
 use crate::reddit::{query_page, query_score, Score, RESOLUTION_MILLIS};
 
+mod db;
 mod reddit;
 
 // -----------------
@@ -25,6 +28,9 @@ pub struct Store {
 
     #[rid(skip)]
     polling: bool,
+
+    #[rid(skip)]
+    db: Option<DB>,
 }
 
 impl RidStore<Msg> for Store {
@@ -32,6 +38,7 @@ impl RidStore<Msg> for Store {
         Self {
             posts: HashMap::new(),
             polling: false,
+            db: None,
         }
     }
 
@@ -42,11 +49,30 @@ impl RidStore<Msg> for Store {
                 self.posts.remove(&id);
                 rid::post(Reply::StoppedWatching(req_id, id));
             }
-            Msg::Initialize => {
+            Msg::Initialize(app_dir) => {
                 // Guard against more than one polling thread, i.e. due to hot restart
                 if !self.polling {
                     self.polling = true;
                     poll_posts();
+                }
+                if self.db.is_none() {
+                    let db_path = Path::new(&app_dir)
+                        .join(DB_NAME)
+                        .to_string_lossy()
+                        .to_string();
+
+                    match DB::new(&db_path) {
+                        Ok(db) => {
+                            self.db = Some(db);
+                            rid::log_info!("Initialized Database at '{}'", db_path);
+                        }
+                        Err(err) => {
+                            rid::severe!(
+                                format!("Failed to open Database at '{}'", db_path),
+                                err.to_string()
+                            );
+                        }
+                    };
                 }
                 rid::post(Reply::Initialized(req_id));
             }
@@ -70,7 +96,7 @@ impl Store {
 // -----------------
 #[rid::message(Reply)]
 pub enum Msg {
-    Initialize,
+    Initialize(String),
 
     StartWatching(String),
     StopWatching(String),
