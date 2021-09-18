@@ -17,7 +17,8 @@ class PostsCubit extends Cubit<PostsState> {
 
   void _subscribe() {
     removedPostsSub = rid.replyChannel.stream
-        .where((x) => x.type == Reply.StartedWatching)
+        .where((x) =>
+            x.type == Reply.StartedWatching || x.type == Reply.StoppedWatching)
         .listen((_) => _refresh());
   }
 
