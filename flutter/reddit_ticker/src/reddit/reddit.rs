@@ -1,8 +1,8 @@
-use super::PageRoot;
+use super::{Page, PageRoot};
 
 use anyhow::{anyhow, Result};
 
-pub fn query_page(url: &str) -> Result<()> {
+pub fn query_page(url: &str) -> Result<Page> {
     // Cut off query string
     let url = match url.find('?') {
         Some(idx) => &url[..idx],
@@ -38,6 +38,5 @@ pub fn query_page(url: &str) -> Result<()> {
         .ok_or_else(|| anyhow!("Page was missing a valid url"))?
         .clone();
 
-    rid::log_debug!("id: {}, title: {}, url: {}", id, title, url);
-    Ok(())
+    Ok(Page { id, title, url })
 }
