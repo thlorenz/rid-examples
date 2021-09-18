@@ -1,3 +1,6 @@
+#![allow(unused_variables, dead_code)]
+use crate::reddit::ApiRoot;
+
 use super::{Page, PageRoot};
 
 use anyhow::{anyhow, Result};
@@ -39,4 +42,15 @@ pub fn query_page(url: &str) -> Result<Page> {
         .clone();
 
     Ok(Page { id, title, url })
+}
+
+const API_INFO_URL: &str = "https://api.reddit.com/api/info";
+
+pub fn query_score(id: &str) -> Result<i32> {
+    let url = format!("{}?id={}", API_INFO_URL, id);
+    let api_response: ApiRoot = ureq::get(&url)
+        .set("User-Agent", "reddit-ticker")
+        .call()?
+        .into_json()?;
+    Ok(api_response.data.children[0].data.score)
 }

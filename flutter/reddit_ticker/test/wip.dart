@@ -4,5 +4,6 @@ import 'logging.dart';
 
 void main() async {
   RidMessaging.init();
-  rid_ffi.rid_export_page_request();
+  final store = Store.instance;
+  print('${store.posts}');
 }
