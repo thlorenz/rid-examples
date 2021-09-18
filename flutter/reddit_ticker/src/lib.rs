@@ -1,4 +1,5 @@
 use anyhow::{anyhow, Result};
+use core::time;
 use std::{
     collections::HashMap,
     sync::{RwLockReadGuard, RwLockWriteGuard},
@@ -9,7 +10,7 @@ use std::{
 use reddit::Post;
 use rid::RidStore;
 
-use reddit::query_page;
+use crate::reddit::{query_page, query_score, Score, RESOLUTION_MILLIS};
 
 mod reddit;
 
@@ -18,14 +19,19 @@ mod reddit;
 // -----------------
 #[rid::store]
 #[rid::structs(Post)]
+#[derive(rid::Config)]
 pub struct Store {
     posts: HashMap<String, Post>,
+
+    #[rid(skip)]
+    polling: bool,
 }
 
 impl RidStore<Msg> for Store {
     fn create() -> Self {
         Self {
             posts: HashMap::new(),
+            polling: false,
         }
     }
 
@@ -35,6 +41,14 @@ impl RidStore<Msg> for Store {
             Msg::StopWatching(id) => {
                 self.posts.remove(&id);
                 rid::post(Reply::StoppedWatching(req_id, id));
+            }
+            Msg::Initialize => {
+                // Guard against more than one polling thread, i.e. due to hot restart
+                if !self.polling {
+                    self.polling = true;
+                    poll_posts();
+                }
+                rid::post(Reply::Initialized(req_id));
             }
         }
     }
@@ -56,6 +70,8 @@ impl Store {
 // -----------------
 #[rid::message(Reply)]
 pub enum Msg {
+    Initialize,
+
     StartWatching(String),
     StopWatching(String),
 }
@@ -65,10 +81,14 @@ pub enum Msg {
 // -----------------
 #[rid::reply]
 pub enum Reply {
+    Initialized(u64),
+
     StartedWatching(u64, String),
     StoppedWatching(u64, String),
 
     FailedRequest(u64, String),
+
+    UpdatedScores,
 }
 
 // -----------------
@@ -103,4 +123,62 @@ fn try_start_watching(url: String) -> Result<Post> {
         scores: vec![],
     };
     Ok(post)
+}
+
+// -----------------
+// Poll Posts we are watching for Scores Updates
+// -----------------
+fn poll_posts() {
+    rid::log_debug!("Creating thread to poll post data");
+    thread::spawn(move || loop {
+        // First we query all posts and only take a write lock on the store once we have all the
+        // data in order to limit the amount of time that the UI or other threads cannot access the
+        // store.
+
+        // In order to release the read lock on the store immediately, we clone the post ids.
+        let post_ids: Vec<_> = { Store::read().posts.keys().cloned().collect() };
+        let scores: Vec<_> = post_ids
+            .into_iter()
+            .map(|id| {
+                let score = query_score(&id);
+                (id, score)
+            })
+            // Filter out all cases where we couldn't update the score and send an error so that we
+            // can log the problem and alert the user
+            .filter_map(|(id, score_res)| match score_res {
+                Ok(score) => Some((id, score)),
+                Err(err) => {
+                    rid::error!("Failed to update score for a post", err.to_string());
+                    None
+                }
+            })
+            .collect();
+
+        {
+            // Aquire a write lock on the store once and make sure it gets dropped (at the end of
+            // this block) when we no longer need it
+            let mut store = Store::write();
+            for (id, score) in scores {
+                // A post could have been removed in between getting the post ids and aquiring
+                // the write lock.
+                if !store.posts.contains_key(&id) {
+                    continue;
+                }
+
+                let time_stamp = SystemTime::now();
+                let post = &mut store.posts.get_mut(&id).unwrap();
+                let secs_since_post_added = time_stamp
+                    .duration_since(post.added)
+                    .expect("Getting duration")
+                    .as_secs();
+
+                post.scores.push(Score {
+                    secs_since_post_added,
+                    score,
+                });
+            }
+        }
+        rid::post(Reply::UpdatedScores);
+        thread::sleep(time::Duration::from_millis(RESOLUTION_MILLIS));
+    });
 }

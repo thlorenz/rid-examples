@@ -9,6 +9,8 @@ pub use reddit::*;
 pub use reddit_api_response::*;
 pub use reddit_page_response::*;
 
+pub const RESOLUTION_MILLIS: u64 = 5_000;
+
 // -----------------
 // Reddit Page
 // -----------------

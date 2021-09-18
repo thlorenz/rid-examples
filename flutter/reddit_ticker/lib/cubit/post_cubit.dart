@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc/bloc.dart';
 import 'package:meta/meta.dart';
 import 'package:plugin/generated/rid_api.dart';
@@ -6,7 +8,22 @@ part 'post_state.dart';
 
 class PostCubit extends Cubit<PostState> {
   final Store _store = Store.instance;
-  PostCubit(Post post) : super(PostActive(post));
+  StreamSubscription<PostedReply>? scoreTickSub;
+  PostCubit(Post post) : super(PostActive(post)) {
+    _subscribe();
+  }
+
+  void _subscribe() {
+    assert(scoreTickSub == null, 'Should only subscribe to post ticks once');
+    scoreTickSub = rid.replyChannel.stream
+        .where((x) => x.type == Reply.UpdatedScores)
+        .listen((_) => _refreshState());
+  }
+
+  Future<void> _unsubscribe() async {
+    await scoreTickSub?.cancel();
+    scoreTickSub = null;
+  }
 
   Future<void> _refreshState() async {
     assert(state is PostActive, 'Should only refresh post when it is ticking');
@@ -25,5 +42,11 @@ class PostCubit extends Cubit<PostState> {
     final post = (state as PostActive).post;
     await _store.msgStopWatching(post.id).then((_) => _refreshState());
     return true;
+  }
+
+  @override
+  Future<void> close() async {
+    await _unsubscribe();
+    return super.close();
   }
 }
