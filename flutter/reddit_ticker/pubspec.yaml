@@ -16,6 +16,8 @@ dependencies:
     path: plugin
 
   cupertino_icons: ^1.0.2
+  bloc: ^7.1.0
+  flutter_bloc: ^7.2.0
 
 dev_dependencies:
   flutter_test:
@@ -24,3 +26,7 @@ dev_dependencies:
 flutter:
 
   uses-material-design: true
+
+  assets:
+    - assets/dash.png
+    - assets/ferris.png
