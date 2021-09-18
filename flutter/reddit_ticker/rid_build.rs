@@ -1,6 +1,4 @@
-use rid_build::{
-    build, BuildConfig, BuildTarget, FlutterConfig, FlutterPlatform, Project,
-};
+use rid_build::{build, BuildConfig, BuildTarget, FlutterConfig, FlutterPlatform, Project};
 use std::env;
 
 fn main() {
@@ -13,21 +11,21 @@ fn main() {
         .expect("Missing CARGO_PKG_NAME, please run this via 'cargo run'");
     let lib_name = &format!("lib{}", &crate_name);
 
-    let build_config = BuildConfig {
-        target: BuildTarget::Debug,
-        project: Project::Flutter(FlutterConfig {
+    let project = match &env::var("TEST_DART") {
+        Ok(_) => Project::Dart,
+        Err(_) => Project::Flutter(FlutterConfig {
             plugin_name: "plugin".to_string(),
             platforms: vec![
-                // NOTE: Remove any of the below platforms that you don't support
-
-                // Mobile
                 FlutterPlatform::ios(),
-                FlutterPlatform::android(),
-                // Desktop
                 FlutterPlatform::macos(),
-                FlutterPlatform::linux(),
+                FlutterPlatform::android(),
             ],
         }),
+    };
+
+    let build_config = BuildConfig {
+        target: BuildTarget::Debug,
+        project,
         lib_name,
         crate_name,
         project_root: &crate_dir,
