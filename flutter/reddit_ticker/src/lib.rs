@@ -209,6 +209,12 @@ fn poll_posts() {
                     secs_since_post_added,
                     score,
                 });
+
+                if let Some(db) = &store.db.as_ref() {
+                    if let Err(err) = db.insert_score(&id, time_stamp, score) {
+                        rid::error!("Failed to add score for post", err.to_string());
+                    }
+                }
             }
         }
         rid::post(Reply::UpdatedScores);
