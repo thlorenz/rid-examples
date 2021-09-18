@@ -47,6 +47,14 @@ impl RidStore<Msg> for Store {
             Msg::StartWatching(url) => start_watching(req_id, url),
             Msg::StopWatching(id) => {
                 self.posts.remove(&id);
+                if let Some(db) = &self.db {
+                    match db.delete_post(&id) {
+                        Ok(rows) => {
+                            rid::log_debug!("Removed post and {} scores from Database", rows - 1)
+                        }
+                        Err(err) => rid::error!("Failed to delete post from Database", err),
+                    }
+                }
                 rid::post(Reply::StoppedWatching(req_id, id));
             }
             Msg::Initialize(app_dir) => {

@@ -1,9 +1,9 @@
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use anyhow::{anyhow, Result};
-use rusqlite::{params, Connection};
+use rusqlite::{params, Connection, Row, NO_PARAMS};
 
-use crate::reddit::Post;
+use crate::reddit::{Post, Score};
 
 pub const DB_NAME: &str = "reddit_ticker.sqlite";
 
@@ -136,6 +136,65 @@ FROM reddit_posts;
         }
         Ok(posts)
     }
+
+    // -----------------
+    // Deleting Posts and Scores
+    // -----------------
+    pub fn delete_post(&self, post_id: &str) -> Result<usize> {
+        let post_rows_removed = self
+            .conn
+            .execute(
+                "
+DELETE FROM reddit_posts 
+WHERE post_id = (?1);
+",
+                params!(post_id),
+            )
+            .map_err(|err| anyhow!("Failed to remove post from table:\nError: {}", err))?;
+
+        let score_rows_removed = self
+            .conn
+            .execute(
+                "
+DELETE FROM reddit_scores 
+WHERE post_id = (?1);
+",
+                params!(post_id),
+            )
+            .map_err(|err| anyhow!("Failed to remove scores from table:\nError: {}", err))?;
+        Ok(post_rows_removed + score_rows_removed)
+    }
+}
+
+// -----------------
+// Sqlite helpers
+// -----------------
+fn try_extract_score(row: &Row, post_added: SystemTime) -> rusqlite::Result<Score> {
+    // Score timestamps are stored [UNIX_EPOCH] seconds, however the rest
+    // of the app treats score timestamps based on the time the post was added.
+    let secs: u32 = row.get(0)?;
+    let time_stamp = secs_to_time_stamp(secs);
+    let secs_since_post_added = time_stamp
+        .duration_since(post_added)
+        .expect("Invalid timestamp")
+        .as_secs();
+
+    let score: i32 = row.get(1)?;
+
+    Ok(Score {
+        secs_since_post_added,
+        score,
+    })
+}
+
+fn try_extract_post(row: &Row) -> rusqlite::Result<Post> {
+    Ok(Post {
+        id: row.get(0)?,
+        title: row.get(1)?,
+        url: row.get(2)?,
+        added: secs_to_time_stamp(row.get(3)?),
+        scores: vec![],
+    })
 }
 
 // -----------------
