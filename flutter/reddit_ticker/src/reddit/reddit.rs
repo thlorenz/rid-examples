@@ -1,6 +1,6 @@
 use super::PageRoot;
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 
 pub fn query_page(url: &str) -> Result<()> {
     // Cut off query string
@@ -16,6 +16,15 @@ pub fn query_page(url: &str) -> Result<()> {
         .call()?
         .into_json()?;
 
-    rid::log_debug!("Got page {:#?}", page_response);
+    let data = &page_response
+        .first()
+        .ok_or_else(|| anyhow!("Page response did not contain any pages"))?
+        .data
+        .children
+        .first()
+        .ok_or_else(|| anyhow!("Page response did not contain any children"))?
+        .data;
+
+    rid::log_debug!("{:#?}", data);
     Ok(())
 }
