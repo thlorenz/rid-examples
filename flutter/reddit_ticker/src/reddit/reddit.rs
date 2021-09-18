@@ -25,6 +25,19 @@ pub fn query_page(url: &str) -> Result<()> {
         .ok_or_else(|| anyhow!("Page response did not contain any children"))?
         .data;
 
-    rid::log_debug!("{:#?}", data);
+    let id = data.name.clone();
+    let title = data
+        .title
+        .as_ref()
+        .ok_or_else(|| anyhow!("Page was missing a valid title"))?
+        .clone();
+
+    let url = data
+        .url
+        .as_ref()
+        .ok_or_else(|| anyhow!("Page was missing a valid url"))?
+        .clone();
+
+    rid::log_debug!("id: {}, title: {}, url: {}", id, title, url);
     Ok(())
 }
