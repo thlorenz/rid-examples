@@ -74,6 +74,25 @@ impl RidStore<Msg> for Store {
                         }
                     };
                 }
+                if let Some(db) = &self.db {
+                    self.posts = match db.get_all_posts() {
+                        Ok(posts) => {
+                            let mut map = HashMap::<String, Post>::new();
+                            for post in posts {
+                                map.insert(post.id.clone(), post);
+                            }
+                            map
+                        }
+                        Err(err) => {
+                            rid::error!("Failed to retrieve existing posts", err);
+                            HashMap::new()
+                        }
+                    };
+                    rid::log_info!(
+                        "Loaded {} existing post(s) from the Database",
+                        self.posts.len()
+                    );
+                }
                 rid::post(Reply::Initialized(req_id));
             }
         }

@@ -86,6 +86,56 @@ VALUES (?1, ?2, ?3);
 
         Ok(res)
     }
+
+    // -----------------
+    // Retrieving Posts and Scores
+    // -----------------
+    pub fn get_scores(&self, post: &Post) -> Result<Vec<Score>> {
+        let mut stmt = self.conn.prepare(
+            "
+SELECT added, score
+FROM reddit_scores
+WHERE post_id = (?1)
+",
+        )?;
+
+        let results: Vec<_> = stmt
+            .query_map(params!(post.id), |row| try_extract_score(row, post.added))?
+            .filter_map(|x| match x {
+                Ok(score) => Some(score),
+                Err(err) => {
+                    rid::log_warn!("Found invalid score in Database {}", err.to_string());
+                    None
+                }
+            })
+            .collect();
+        Ok(results)
+    }
+
+    pub fn get_all_posts(&self) -> Result<Vec<Post>> {
+        let mut stmt = self.conn.prepare(
+            "
+SELECT post_id, title, url, added 
+FROM reddit_posts;
+",
+        )?;
+        let results = stmt.query_map(NO_PARAMS, try_extract_post)?;
+        let mut posts: Vec<_> = results
+            .filter_map(|res| match res {
+                Ok(post) => Some(post),
+                Err(err) => {
+                    rid::error!("A post couldn't be properly extracted", err.to_string());
+                    None
+                }
+            })
+            .collect();
+
+        for mut post in posts.iter_mut() {
+            let scores = self.get_scores(&post)?;
+            post.scores = scores
+        }
+        Ok(posts)
+    }
 }
 
 // -----------------
