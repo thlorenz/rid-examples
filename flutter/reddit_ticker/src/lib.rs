@@ -1,9 +1,15 @@
-use std::{collections::HashMap, time::SystemTime};
+use anyhow::{anyhow, Result};
+use std::{
+    collections::HashMap,
+    sync::{RwLockReadGuard, RwLockWriteGuard},
+    thread,
+    time::SystemTime,
+};
 
 use reddit::Post;
 use rid::RidStore;
 
-use crate::reddit::Score;
+use reddit::query_page;
 
 mod reddit;
 
@@ -18,55 +24,76 @@ pub struct Store {
 
 impl RidStore<Msg> for Store {
     fn create() -> Self {
-        let post_id = String::from("fake post 1");
-        let scores = vec![
-            Score {
-                score: 1,
-                secs_since_post_added: 10,
-            },
-            Score {
-                score: 2,
-                secs_since_post_added: 20,
-            },
-            Score {
-                score: 4,
-                secs_since_post_added: 30,
-            },
-            Score {
-                score: 8,
-                secs_since_post_added: 40,
-            },
-            Score {
-                score: 6,
-                secs_since_post_added: 50,
-            },
-            Score {
-                score: 10,
-                secs_since_post_added: 60,
-            },
-            Score {
-                score: 5,
-                secs_since_post_added: 70,
-            },
-        ];
-        let post = Post {
-            added: SystemTime::now(),
-            id: post_id.clone(),
-            title: String::from("My first fake reddit post"),
-            url: String::from("https://fake.reddit.com/post1"),
-            scores,
-        };
-        let posts = {
-            let mut map = HashMap::new();
-            map.insert(post_id, post);
-            map
-        };
-        Self { posts }
+        Self {
+            posts: HashMap::new(),
+        }
     }
 
-    fn update(&mut self, _req_id: u64, _msg: Msg) {
-        todo!()
+    fn update(&mut self, req_id: u64, msg: Msg) {
+        match msg {
+            Msg::StartWatching(url) => start_watching(req_id, url),
+        }
     }
 }
 
-enum Msg {}
+// Helpers to improve code assist
+impl Store {
+    fn read() -> RwLockReadGuard<'static, Store> {
+        store::read()
+    }
+
+    fn write() -> RwLockWriteGuard<'static, Store> {
+        store::write()
+    }
+}
+
+// -----------------
+// Message
+// -----------------
+#[rid::message(Reply)]
+pub enum Msg {
+    StartWatching(String),
+}
+
+// -----------------
+// Reply
+// -----------------
+#[rid::reply]
+pub enum Reply {
+    StartedWatching(u64, String),
+    FailedRequest(u64, String),
+}
+
+// -----------------
+// Start watching Post
+// -----------------
+fn start_watching(req_id: u64, url: String) {
+    thread::spawn(move || {
+        match try_start_watching(url) {
+            Ok(post) => {
+                let id = post.id.clone();
+                let mut store = Store::write();
+                store.posts.insert(id.clone(), post);
+                rid::post(Reply::StartedWatching(req_id, id))
+            }
+            Err(err) => rid::post(Reply::FailedRequest(req_id, err.to_string())),
+        };
+    });
+}
+
+fn try_start_watching(url: String) -> Result<Post> {
+    let page = query_page(&url)
+        .map_err(|err| anyhow!("Failed to get valid page data: {}\nError: {}", url, err))?;
+
+    rid::log_debug!("Got page for url '{}' with id '{}'.", url, page.id);
+
+    let added = SystemTime::now();
+    let post = Post {
+        added,
+        id: page.id,
+        title: page.title,
+        url: page.url,
+        scores: vec![],
+    };
+    Ok(post)
+}
