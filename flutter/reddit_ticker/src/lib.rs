@@ -3,6 +3,8 @@ use std::{collections::HashMap, time::SystemTime};
 use reddit::Post;
 use rid::RidStore;
 
+use crate::reddit::Score;
+
 mod reddit;
 
 // -----------------
@@ -17,12 +19,42 @@ pub struct Store {
 impl RidStore<Msg> for Store {
     fn create() -> Self {
         let post_id = String::from("fake post 1");
+        let scores = vec![
+            Score {
+                score: 1,
+                secs_since_post_added: 10,
+            },
+            Score {
+                score: 2,
+                secs_since_post_added: 20,
+            },
+            Score {
+                score: 4,
+                secs_since_post_added: 30,
+            },
+            Score {
+                score: 8,
+                secs_since_post_added: 40,
+            },
+            Score {
+                score: 6,
+                secs_since_post_added: 50,
+            },
+            Score {
+                score: 10,
+                secs_since_post_added: 60,
+            },
+            Score {
+                score: 5,
+                secs_since_post_added: 70,
+            },
+        ];
         let post = Post {
             added: SystemTime::now(),
             id: post_id.clone(),
             title: String::from("My first fake reddit post"),
             url: String::from("https://fake.reddit.com/post1"),
-            scores: vec![],
+            scores,
         };
         let posts = {
             let mut map = HashMap::new();
