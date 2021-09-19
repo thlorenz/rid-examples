@@ -1,6 +1,7 @@
 mod reddit;
+use reddit::query_page;
+
 #[rid::export]
-pub fn hello_world(id: u8) -> String {
-    rid::log_info!("Providing hello world for {}", id);
-    "hello world".to_string()
+pub fn page_request() {
+    query_page("https://www.reddit.com/r/rust/comments/ncc9vc/rid_integrate_rust_into_your_dart_or_flutter_app/").expect("Should be able to get page");
 }

@@ -11,7 +11,7 @@ public class Plugin: NSObject, FlutterPlugin {
 }
 // <rid:prevent_tree_shake Start>
 func dummyCallsToPreventTreeShaking() {
-    rid_export_hello_world(0);
+    rid_export_page_request();
     rid_cstring_free(nil);
     rid_init_msg_isolate(0);
     rid_init_reply_isolate(0);
