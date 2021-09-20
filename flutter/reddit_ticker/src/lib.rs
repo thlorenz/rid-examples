@@ -1,15 +1,38 @@
+use std::{collections::HashMap, time::SystemTime};
+
+use reddit::Post;
+use rid::RidStore;
+
 mod reddit;
-use reddit::{query_page, query_score};
 
-#[rid::export]
-pub fn page_request() -> String {
-    let page = query_page("https://www.reddit.com/r/rust/comments/ncc9vc/rid_integrate_rust_into_your_dart_or_flutter_app/").expect("Should be able to get page");
-    rid::log_info!("{:#?}", page);
-    page.id
+// -----------------
+// Store
+// -----------------
+#[rid::store]
+#[rid::structs(Post)]
+pub struct Store {
+    posts: HashMap<String, Post>,
 }
 
-#[rid::export]
-pub fn post_score_request(id: String) -> i32 {
-    let score = query_score(&id).expect("Should have gotten score");
-    score
+impl RidStore<Msg> for Store {
+    fn create() -> Self {
+        let post_id = String::from("fake post 1");
+        let post = Post {
+            added: SystemTime::now(),
+            id: post_id.clone(),
+            title: String::from("My first fake reddit post"),
+            url: String::from("https://fake.reddit.com/post1"),
+            scores: vec![],
+        };
+        let posts = {
+            let mut map = HashMap::new();
+            map.insert(post_id, post);
+            map
+        };
+        Self { posts }
+    }
+
+    fn update(&mut self, req_id: u64, msg: Msg) {}
 }
+
+enum Msg {}
