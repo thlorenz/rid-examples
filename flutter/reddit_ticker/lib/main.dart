@@ -1,7 +1,70 @@
 import 'package:flutter/material.dart';
 import 'package:plugin/generated/rid_api.dart';
+import 'package:reddit_ticker/rid/messaging.dart';
 
 void main() {
-  rid.messageChannel.stream.listen((msg) => debugPrint("rid-msg: $msg"));
-  rid_ffi.rid_export_page_request();
+  RidMessaging.init();
+
+  rid.debugLock = null;
+
+  runApp(RedditTickerApp());
+}
+
+class RedditTickerApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Reddit Ticker',
+      theme: ThemeData(primarySwatch: Colors.indigo),
+      home: RedditTickerPage(title: 'Reddit Ticker'),
+    );
+  }
+}
+
+class RedditTickerPage extends StatefulWidget {
+  final String title;
+  RedditTickerPage({Key? key, required this.title}) : super(key: key);
+
+  @override
+  _RedditTickerPageState createState() => _RedditTickerPageState();
+}
+
+class _RedditTickerPageState extends State<RedditTickerPage> {
+  @override
+  void initState() {
+    super.initState();
+    ErrorHandler.instance.context = context;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(widget.title),
+              Row(
+                children: [
+                  Image.asset(
+                    "assets/dash.png",
+                    height: 40.0,
+                    width: 40.0,
+                  ),
+                  Icon(Icons.favorite, color: Colors.red),
+                  Image.asset(
+                    "assets/ferris.png",
+                    height: 50.0,
+                    width: 50.0,
+                  ),
+                ],
+              )
+            ],
+          ),
+        ),
+        body: Text('TODO: PostsView'),
+      ),
+    );
+  }
 }
