@@ -1,5 +1,7 @@
 use anyhow::{anyhow, Result};
 
+use crate::reddit::ApiRoot;
+
 use super::{Page, PageRoot};
 
 pub fn query_page(url: &str) -> Result<Page> {
@@ -41,4 +43,25 @@ pub fn query_page(url: &str) -> Result<Page> {
         .clone();
 
     Ok(Page { id, title, url })
+}
+
+const API_INFO_URL: &str = "https://api.reddit.com/api/info";
+
+pub fn query_score(id: &str) -> Result<i32> {
+    let url = format!("{}?id={}", API_INFO_URL, id);
+
+    let api_response: ApiRoot = ureq::get(&url)
+        .set("User-Agent", "reddit-ticker")
+        .call()?
+        .into_json()?;
+
+    let score = api_response
+        .data
+        .children
+        .first()
+        .ok_or_else(|| anyhow!("Post info was missing children"))?
+        .data
+        .score;
+
+    Ok(score)
 }

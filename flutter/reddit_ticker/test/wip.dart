@@ -4,5 +4,7 @@ import 'logging.dart';
 
 void main() async {
   RidMessaging.init();
-  rid_ffi.rid_export_page_request();
+  final id = await rid_ffi.rid_export_page_request();
+  final score = await rid_ffi.rid_export_post_score_request(id);
+  print('Score: $score');
 }
