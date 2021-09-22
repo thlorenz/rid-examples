@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:plugin/generated/rid_api.dart';
+import 'package:reddit_ticker/cubit/add_post_cubit.dart';
 import 'package:reddit_ticker/cubit/posts_cubit.dart';
 import 'package:reddit_ticker/rid/messaging.dart';
+import 'package:reddit_ticker/views/add_post.dart';
 import 'package:reddit_ticker/views/posts.dart';
 
 void main() {
@@ -22,6 +24,7 @@ class RedditTickerApp extends StatelessWidget {
       home: MultiBlocProvider(
         providers: [
           BlocProvider<PostsCubit>(create: (_) => PostsCubit()),
+          BlocProvider<AddPostCubit>(create: (_) => AddPostCubit()),
         ],
         child: RedditTickerPage(title: 'Reddit Ticker'),
       ),
@@ -72,6 +75,8 @@ class _RedditTickerPageState extends State<RedditTickerPage> {
           ),
         ),
         body: PostsView(),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+        floatingActionButton: AddPostView(),
       ),
     );
   }
