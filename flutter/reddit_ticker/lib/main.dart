@@ -7,11 +7,12 @@ import 'package:reddit_ticker/rid/messaging.dart';
 import 'package:reddit_ticker/views/add_post.dart';
 import 'package:reddit_ticker/views/posts.dart';
 
-void main() {
+void main() async {
   RidMessaging.init();
 
   rid.debugLock = null;
 
+  await Store.instance.msgInitialize();
   runApp(RedditTickerApp());
 }
 
