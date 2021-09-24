@@ -30,6 +30,10 @@ impl RidStore<Msg> for Store {
     fn update(&mut self, req_id: u64, msg: Msg) {
         match msg {
             Msg::StartWatching(url) => start_watching(req_id, url),
+            Msg::StopWatching(id) => {
+                self.posts.remove(&id);
+                rid::post(Reply::StoppedWatching(req_id, id));
+            }
         }
     }
 }
@@ -49,6 +53,7 @@ impl Store {
 #[rid::message(Reply)]
 enum Msg {
     StartWatching(String),
+    StopWatching(String),
 }
 
 // -----------------
@@ -57,6 +62,7 @@ enum Msg {
 #[rid::reply]
 enum Reply {
     StartedWatching(u64, String),
+    StoppedWatching(u64, String),
     FailedRequest(u64, String),
 }
 
