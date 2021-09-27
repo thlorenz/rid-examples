@@ -21,6 +21,7 @@ dependencies:
 
   charts_flutter:
     path: ./deps/charts/charts_flutter
+  path_provider: ^2.0.5
 
 dev_dependencies:
   flutter_test:

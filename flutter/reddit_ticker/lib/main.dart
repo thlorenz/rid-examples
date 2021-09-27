@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:plugin/generated/rid_api.dart';
 import 'package:reddit_ticker/cubit/add_post_cubit.dart';
 import 'package:reddit_ticker/cubit/posts_cubit.dart';
@@ -12,7 +13,9 @@ void main() async {
 
   rid.debugLock = null;
 
-  await Store.instance.msgInitialize();
+  WidgetsFlutterBinding.ensureInitialized();
+  final appDir = await getApplicationSupportDirectory();
+  await Store.instance.msgInitialize(appDir.path);
   runApp(RedditTickerApp());
 }
 

@@ -46,7 +46,7 @@ func dummyCallsToPreventTreeShaking() {
     rid_free_ridvec_string(RidVec_Pointer_String());
     rid_get_item_ridvec_string(RidVec_Pointer_String(), 0);
     _include_Store_field_wrappers();
-    rid_msg_Initialize(0);
+    rid_msg_Initialize(0, nil);
     rid_msg_StartWatching(0, nil);
     rid_msg_StopWatching(0, nil);
 }
