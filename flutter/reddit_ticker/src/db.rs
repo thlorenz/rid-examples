@@ -61,6 +61,28 @@ VALUES (?1, ?2, ?3, ?4);
             )
             .map_err(|err| anyhow!("Failed to add post with id {}:\nError: {}", post.id, err))
     }
+
+    pub fn insert_score(&self, post_id: &str, time_stamp: SystemTime, score: i32) -> Result<usize> {
+        let added = time_stamp_to_secs(time_stamp);
+        let res = self
+            .conn
+            .execute(
+                "
+INSERT OR IGNORE INTO reddit_scores (post_id, added, score)
+VALUES (?1, ?2, ?3);
+",
+                params!(post_id, added, score),
+            )
+            .map_err(|err| {
+                anyhow!(
+                    "Failed to insert score for post {}:\nError: {}",
+                    post_id,
+                    err
+                )
+            })?;
+
+        Ok(res)
+    }
 }
 
 fn time_stamp_to_secs(time_stamp: SystemTime) -> u32 {
