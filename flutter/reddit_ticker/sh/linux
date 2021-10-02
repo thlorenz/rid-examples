@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+TARGET_DIR=`cargo metadata --format-version 1 --no-deps | jq ".target_directory" | xargs echo`
+PROJECT_NAME=`cargo metadata --format-version 1 | jq ".resolve.root" | xargs echo | cut -d ' ' -f1`
+LIB_NAME_STATIC=lib$PROJECT_NAME.a
+LIB_NAME_DYNAMIC=lib$PROJECT_NAME.so
+
+# <root>/target/universal/debug
+UNIVERSAL_DEBUG_DIR="$TARGET_DIR/debug"
+FLUTTER_LINUX_DIR="$DIR/../plugin/linux"
+
+mkdir -p $FLUTTER_LINUX_DIR
+
+LIB_SOURCE_FILE_STATIC="$UNIVERSAL_DEBUG_DIR/$LIB_NAME_STATIC"
+LIB_SOURCE_FILE_DYNAMIC="$UNIVERSAL_DEBUG_DIR/$LIB_NAME_DYNAMIC"
+LIB_TARGET_FILE_STATIC="$FLUTTER_LINUX_DIR/$LIB_NAME_STATIC"
+LIB_TARGET_FILE_DYNAMIC="$FLUTTER_LINUX_DIR/$LIB_NAME_DYNAMIC"
+
+cargo build &&                                          \
+  cp $LIB_SOURCE_FILE_STATIC $LIB_TARGET_FILE_STATIC && \
+  cp $LIB_SOURCE_FILE_DYNAMIC $LIB_TARGET_FILE_DYNAMIC
+
+exit $?

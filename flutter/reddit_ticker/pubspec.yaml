@@ -1,0 +1,36 @@
+name: reddit_ticker
+description: A new Flutter project.
+
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.13.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  plugin:
+    path: plugin
+
+  cupertino_icons: ^1.0.2
+  bloc: ^7.1.0
+  flutter_bloc: ^7.2.0
+
+  charts_flutter:
+    path: ./deps/charts/charts_flutter
+  path_provider: ^2.0.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+
+  uses-material-design: true
+
+  assets:
+    - assets/dash.png
+    - assets/ferris.png
