@@ -49,6 +49,7 @@ class _RedditTickerPageState extends State<RedditTickerPage> {
   void initState() {
     super.initState();
     ErrorHandler.instance.context = context;
+    UserMsgHandler.instance.context = context;
   }
 
   @override

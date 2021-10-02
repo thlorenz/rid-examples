@@ -25,6 +25,8 @@ class LogMessageHandler {
       switch (msg.type) {
         case RidMessageType.Severe:
         case RidMessageType.Error:
+        case RidMessageType.MsgWarn:
+        case RidMessageType.MsgInfo:
           return;
         case RidMessageType.LogWarn:
           prefix = WARN_PREFIX;
@@ -48,9 +50,7 @@ class LogMessageHandler {
 
   static LogMessageHandler? _instance;
   static LogMessageHandler get instance {
-    if (_instance == null) {
-      _instance = LogMessageHandler._();
-    }
+    _instance ??= LogMessageHandler._();
     return _instance!;
   }
 }
@@ -65,6 +65,8 @@ class ErrorHandler {
         case RidMessageType.LogWarn:
         case RidMessageType.LogInfo:
         case RidMessageType.LogDebug:
+        case RidMessageType.MsgWarn:
+        case RidMessageType.MsgInfo:
           return;
         case RidMessageType.Severe:
           final indentedDetails = msg.details?.split('\n').join(DETAILS_INDENT);
@@ -116,9 +118,78 @@ class ErrorHandler {
 
   static ErrorHandler? _instance;
   static ErrorHandler get instance {
-    if (_instance == null) {
-      _instance = ErrorHandler._();
-    }
+    _instance ??= ErrorHandler._();
+    return _instance!;
+  }
+}
+
+class UserMsgHandler {
+  BuildContext? _context;
+  late final StreamSubscription<RidMessage>? _errorSub;
+
+  UserMsgHandler._() {
+    _errorSub = rid.messageChannel.stream.listen((RidMessage msg) {
+      switch (msg.type) {
+        case RidMessageType.LogWarn:
+        case RidMessageType.LogInfo:
+        case RidMessageType.LogDebug:
+        case RidMessageType.Severe:
+        case RidMessageType.Error:
+          return;
+        case RidMessageType.MsgWarn:
+          debugPrint('$WARN_PREFIX ${msg.message}');
+
+          // Show UI message if we were provided a BuildContext
+          if (_context != null) {
+            ScaffoldMessenger.of(_context!).showMaterialBanner(
+              MaterialBanner(
+                backgroundColor: Colors.orange,
+                content: Text(msg.message),
+                actions: [
+                  TextButton(
+                    child: const Text('Dismiss'),
+                    onPressed: () => ScaffoldMessenger.of(_context!)
+                        .hideCurrentMaterialBanner(),
+                  ),
+                ],
+              ),
+            );
+          } else {
+            debugPrint(
+                'WARN: cannot show user message since no `BuildContext` was provided to UserMsgHandler');
+          }
+          break;
+
+        case RidMessageType.MsgInfo:
+          debugPrint('$INFO_PREFIX ${msg.message}');
+
+          // Show UI message if we were provided a BuildContext
+          if (_context != null) {
+            ScaffoldMessenger.of(_context!).showSnackBar(
+              SnackBar(
+                backgroundColor: Colors.orange,
+                content: Text(msg.message),
+              ),
+            );
+          } else {
+            debugPrint(
+                'WARN: cannot show user message since no `BuildContext` was provided to UserMsgHandler');
+          }
+          break;
+      }
+    });
+  }
+
+  set context(BuildContext val) => _context = val;
+
+  void dispose() {
+    _errorSub?.cancel();
+    _errorSub = null;
+  }
+
+  static UserMsgHandler? _instance;
+  static UserMsgHandler get instance {
+    _instance ??= UserMsgHandler._();
     return _instance!;
   }
 }
@@ -127,5 +198,6 @@ class RidMessaging {
   static void init() {
     LogMessageHandler.instance;
     ErrorHandler.instance;
+    UserMsgHandler.instance;
   }
 }
